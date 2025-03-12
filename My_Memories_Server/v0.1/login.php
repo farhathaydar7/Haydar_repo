@@ -12,10 +12,12 @@ try {
     $data = json_decode(file_get_contents('php://input'), true);
     $userModel = new UserModel();
     
-    $authResult = $userModel->authenticate(
-        $data['email'] ?? '',
-        $data['password'] ?? ''
-    );
+    $user = $userModel->getByEmail($data['email'] ?? '');
+    if (!$user || !password_verify($data['password'] ?? '', $user['password'])) {
+        throw new RuntimeException('Invalid credentials', 401);
+    }
+    
+    $authResult = $userModel->authenticateWithUser($user);
 
     echo json_encode([
         'success' => true,

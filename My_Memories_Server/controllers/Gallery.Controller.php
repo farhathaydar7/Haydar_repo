@@ -39,8 +39,16 @@ class GalleryController {
         return false;
     }
 
-    public function createPhoto($owner_id, $title, $date, $description, $tag_id, $file) {
-        return $this->photoModel->create($owner_id, $title, $date, $description, $tag_id, $file);
+
+    public function createPhoto($owner_id, $title, $description, $tag_id, $file) {
+        $photoData = [
+            'owner_id' => $owner_id,
+            'title' => $title,
+            'description' => $description,
+            'tag_id' => $tag_id,
+            'file' => $file
+        ];
+        return $this->photoModel->create($photoData);
     }
 
     public function getPhotoById($image_id) {
@@ -71,27 +79,27 @@ class GalleryController {
 
     // Add Tag method
     public function createTag($owner_id, $name) {
-        return $this->tagModel->create($owner_id, $name);
+        return $this->tagModel->createTag($owner_id, $name);
     }
 
     // Get tag by ID
     public function getTagById($tag_id) {
-        return $this->tagModel->getById($tag_id);
+        return $this->tagModel->getTagById($tag_id);
     }
 
     // Get all tags by owner
     public function getTagsByOwner($owner_id) {
-        return $this->tagModel->getAllByOwner($owner_id);
+        return $this->tagModel->getTagsByOwner($owner_id);
     }
 
     // Update tag
     public function updateTag($tag_id, $name) {
-        return $this->tagModel->update($tag_id, $name);
+        return $this->tagModel->updateTag($tag_id, $name);
     }
 
     // Delete tag
     public function deleteTag($tag_id) {
-        return $this->tagModel->delete($tag_id);
+        return $this->tagModel->deleteTag($tag_id);
     }
 
     // Register a new user
