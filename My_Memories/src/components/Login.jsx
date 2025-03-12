@@ -17,22 +17,22 @@ function Login() {
         method: 'POST',
         headers: HEADERS,
         body: JSON.stringify({ email: username, password }),
-              });
+      });
 
       let data;
-              try {
-                data = await response.json();
-              } catch (e) {
-                setError('Failed to parse response');
-                console.error("JSON parse error:", e);
-                return;
-              }
+      try {
+        data = await response.json();
+      } catch (e) {
+        setError('Failed to parse response');
+        console.error("JSON parse error:", e);
+        return;
+      }
 
       if (response.ok && data.token) {
         // Store the token
         localStorage.setItem('jwt_token', data.token);
         alert('Login successful!');
-        // Redirect to gallery
+        navigate('/gallery'); // Redirect to gallery on successful login
       } else {
         setError(data.error || 'Login failed');
       }

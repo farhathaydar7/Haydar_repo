@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { sha256 } from 'js-sha256';
 import API_URL from '../assets/links';
 import HEADERS from '../assets/headers';
+import { useNavigate } from 'react-router-dom';
 
 function Register() {
   const [username, setUsername] = useState('');
@@ -9,6 +10,7 @@ function Register() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -25,7 +27,7 @@ function Register() {
 
       if (response.ok && data.success) {
         setSuccess('User registered successfully');
-        // Optionally redirect to login page after successful registration
+        navigate('/login');
       } else {
         setError(data.error || 'Registration failed');
       }
