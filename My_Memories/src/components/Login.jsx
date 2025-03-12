@@ -71,7 +71,7 @@ function Login() {
       </form>
       <button
         type="button"
-        onClick={() => navigate('/signup')}
+        onClick={() => navigate('/register')}
         style={{ marginTop: '1rem' }}
       >
         Don't have an account? Sign up

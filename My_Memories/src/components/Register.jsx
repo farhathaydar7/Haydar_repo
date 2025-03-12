@@ -5,6 +5,7 @@ import HEADERS from '../assets/headers';
 
 function Register() {
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -17,7 +18,7 @@ function Register() {
       const response = await fetch(API_URL + 'v0.1/register.php', { // Adjust path if necessary
         method: 'POST',
         headers: HEADERS,
-        body: JSON.stringify({ username, password: sha256(password) }),
+        body: JSON.stringify({ username, email, password: sha256(password) }),
       });
 
       const data = await response.json();
@@ -47,6 +48,16 @@ function Register() {
             id="username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+        </div>
+        <div>
+          <label htmlFor="email">Email:</label>
+          <input
+            type="email"
+            id="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required
           />
         </div>
