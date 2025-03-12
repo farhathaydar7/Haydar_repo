@@ -131,5 +131,20 @@ public function create($owner_id, $title, $date, $description, $tag_id, $file) {
 
         return "assets/photos/$user_id/$fileName";
     }
+
+    // Get all photos by tag
+    public function getAllByTag($tag_id) {
+        $stmt = $this->db->prepare("SELECT * FROM memory WHERE tag_id = :tag_id");
+        $stmt->bindParam(':tag_id', $tag_id);
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Get all photos
+    public function getAll() {
+        $stmt = $this->db->prepare("SELECT * FROM memory");
+        $stmt->execute();
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>
