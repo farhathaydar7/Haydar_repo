@@ -8,7 +8,7 @@ class UserSkeleton {
     protected $email;
     protected $password;
 
-    function UserSkeleton($id = null, $username = null, $email = null, $password = null) {
+    function __construct($id = null, $username = null, $email = null, $password = null) {
         $this->id = $id;
         $this->username = $username;
         $this->email = $email;

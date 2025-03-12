@@ -11,12 +11,20 @@ class ComposerStaticInitaf8356de0f328d66bc81deb6a30f9478
         array (
             'Haydar\\MyMemoriesServer\\' => 24,
         ),
+        'F' => 
+        array (
+            'Firebase\\JWT\\' => 13,
+        ),
     );
 
     public static $prefixDirsPsr4 = array (
         'Haydar\\MyMemoriesServer\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src',
+        ),
+        'Firebase\\JWT\\' => 
+        array (
+            0 => __DIR__ . '/..' . '/firebase/php-jwt/src',
         ),
     );
 

@@ -1,30 +1,40 @@
 <?php
 
+require_once __DIR__ . '/../vendor/autoload.php';
+
 require_once '../skeletons/User.Skeleton.php';
 use Firebase\JWT\JWT;
 class UserModel extends UserSkeleton {
     private $db;
 
-    function UserModel($id = null, $username = null, $email = null, $password = null) {
-        // Initialize the skeleton properties
-        $this->UserSkeleton($id, $username, $email, $password);
-        global $db; // Get the PDO instance from config.php
+    public function __construct() {
+        parent::__construct();
+        global $db;
         $this->db = $db;
     }
 
 
 
-    // Create user
-    public function create($username, $email, $password) {
+    // Create user and return ID
+    public function create(array $data) {
         $stmt = $this->db->prepare("
-            INSERT INTO users (username, email, password) 
+            INSERT INTO users (username, email, password)
             VALUES (:username, :email, :password)
         ");
-        $stmt->bindParam(':username', $username);
-        $stmt->bindParam(':email', $email);
-        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-        $stmt->bindParam(':password', $hashedPassword);
-        return $stmt->execute();
+        
+        $user = new UserSkeleton(
+            null,
+            $data['email'], // Use email as username
+            $data['email'],
+            $data['password']
+        );
+
+        $stmt->bindValue(':username', $user->getUsername());
+        $stmt->bindValue(':email', $user->getEmail());
+        $stmt->bindValue(':password', $user->getPassword());
+        
+        $stmt->execute();
+        return $this->db->lastInsertId();
     }
 
     // Get user by ID
@@ -54,15 +64,42 @@ class UserModel extends UserSkeleton {
         $stmt->bindParam(':id', $id);
         return $stmt->execute();
     }
-}
-public function authenticate($username, $password) {
-    $stmt = $this->db->prepare("SELECT * FROM users WHERE username = :username LIMIT 1");
-    $stmt->bindParam(':username', $username);
+
+// Authenticate user and return JWT
+public function authenticate(string $email, string $password): ?array {
+    $stmt = $this->db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
+    $stmt->bindParam(':email', $email);
     $stmt->execute();
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
-    if ($user && password_verify($password, $user['password'])) {
-        return $user;
+    $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($userData && password_verify($password, $userData['password'])) {
+        $user = new UserSkeleton(
+            $userData['id'],
+            $userData['username'],
+            $userData['email'],
+            $userData['password']
+        );
+
+        return [
+            'user' => $user,
+            'token' => $this->generateJwt($user)
+        ];
     }
-    return false;
-}   
+    return null;
+}
+
+// Generate JWT token
+private function generateJwt(UserSkeleton $user): string {
+    global $jwt_secret;
+    
+    $payload = [
+        'iss' => 'my_memories',
+        'sub' => $user->getId(),
+        'email' => $user->getEmail(),
+        'exp' => time() + 3600 // 1 hour
+    ];
+
+    return JWT::encode($payload, $jwt_secret, 'HS256');
+}
+}
 ?>
