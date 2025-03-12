@@ -1,4 +1,9 @@
 <?php
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type");
+
+
 // backend/api/index.php
 
 require_once __DIR__ . '../controllers/Gallery.Controller.php';
@@ -7,6 +12,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
 header("Content-Type: application/json");
+header('Access-Control-Allow-Origin: *');
 
 $controller = new GalleryController();
 

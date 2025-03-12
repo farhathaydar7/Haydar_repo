@@ -1,3 +1,3 @@
-const API_URL = 'http://localhost/My_Memories_Server/';
+const API_URL = 'http://localhost/Haydar_repo/My_Memories_Server/';
 
 export default API_URL;

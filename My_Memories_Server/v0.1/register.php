@@ -3,6 +3,7 @@ require_once __DIR__.'/../config.php';
 require_once __DIR__.'/../models/User.Model.php';
 
 header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
 
 try {
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {

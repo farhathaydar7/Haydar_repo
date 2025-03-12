@@ -26,4 +26,12 @@ header("Access-Control-Allow-Headers: Content-Type, Authorization");
 require_once __DIR__ . '/models/User.Model.php';
 require_once __DIR__ . '/models/Photo.Model.php';
 require_once __DIR__ . '/models/Tag.Model.php';
+
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type, Authorization");
+    exit();
+}
 ?>
+
