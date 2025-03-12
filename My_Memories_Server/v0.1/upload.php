@@ -46,7 +46,17 @@ try {
     $title = $data['title'] ?? 'Untitled';
     $date = $data['date'] ?? date('Y-m-d');
     $description = $data['description'] ?? '';
-    $tag_id = $data['tag_id'] ?? null;
+
+    // Get tag name from request
+    $tag_name = $data['tag'] ?? null;
+
+    // Find or create tag
+    $tag_id = null;
+    if (!empty($tag_name)) {
+        require_once __DIR__.'/../models/Tag.Model.php';
+        $tagModel = new TagModel();
+        $tag_id = $tagModel->findOrCreateTag($tag_name, $owner_id);
+    }
 
     
         // Directly call create() with all parameters

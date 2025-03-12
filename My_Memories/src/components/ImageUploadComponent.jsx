@@ -81,7 +81,7 @@ const ImageUploadComponent = () => {
       image: base64Image,
       title: memoryTitle,
       date: memoryDate,
-      tag_id: tags,
+      tag: tags,  // Changed from tag_id to tag
       description: description,
     };
 
