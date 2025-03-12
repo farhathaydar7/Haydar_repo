@@ -21,19 +21,19 @@ class UserModel extends UserSkeleton {
             INSERT INTO users (username, email, password)
             VALUES (:username, :email, :password)
         ");
-        
-        $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
+
         $user = new UserSkeleton(
             null,
-            $data['email'], // Use email as username
+            $data['username'],
             $data['email'],
-            $hashedPassword
+            $data['password']
         );
+        $hashedPassword = $user->getPassword();
 
         $stmt->bindValue(':username', $user->getUsername());
         $stmt->bindValue(':email', $user->getEmail());
-        $stmt->bindValue(':password', $user->getPassword());
-        
+        $stmt->bindValue(':password', $hashedPassword);
+
         $stmt->execute();
         return $this->db->lastInsertId();
     }
