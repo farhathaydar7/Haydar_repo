@@ -17,7 +17,7 @@ try {
         throw new RuntimeException('Invalid credentials', 401);
     }
     
-    $authResult = $userModel->authenticateWithUser($user);
+    $authResult = $userModel->authenticate($user['email'], $data['password']);
 
     echo json_encode([
         'success' => true,

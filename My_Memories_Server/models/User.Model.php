@@ -37,6 +37,14 @@ class UserModel extends UserSkeleton {
         return $this->db->lastInsertId();
     }
 
+    // Get user by Email
+    public function getByEmail($email) {
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE email = :email");
+        $stmt->bindParam(':email', $email);
+        $stmt->execute();
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     // Get user by ID
     public function getById($id) {
         $stmt = $this->db->prepare("SELECT * FROM users WHERE id = :id");
