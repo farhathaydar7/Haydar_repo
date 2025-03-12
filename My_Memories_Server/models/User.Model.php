@@ -22,11 +22,12 @@ class UserModel extends UserSkeleton {
             VALUES (:username, :email, :password)
         ");
         
+        $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
         $user = new UserSkeleton(
             null,
             $data['email'], // Use email as username
             $data['email'],
-            $data['password']
+            $hashedPassword
         );
 
         $stmt->bindValue(':username', $user->getUsername());
@@ -54,6 +55,14 @@ class UserModel extends UserSkeleton {
     }
 
     // Update user
+    public function updatePassword($id, $newPassword) {
+        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
+        $stmt = $this->db->prepare("UPDATE users SET password = :password WHERE id = :id");
+        $stmt->bindParam(':password', $hashedPassword);
+        $stmt->bindParam(':id', $id);
+        return $stmt->execute();
+    }
+
     public function update($id, $username, $email) {
         $stmt = $this->db->prepare("
             UPDATE users 

@@ -19,14 +19,34 @@ try {
     }
 
     $data = json_decode(file_get_contents('php://input'), true);
+    
+    if ($data === null || !isset($data['email'], $data['password'])) {
+        throw new InvalidArgumentException('Invalid request body', 400);
+    }
+
     $userModel = new UserModel();
     
-    $user = $userModel->getByEmail($data['email'] ?? '');
-    if (!$user || !password_verify($data['password'] ?? '', $user['password'])) {
+    // Temporary debug logging
+    error_log('Login attempt for: ' . $data['email']);
+    
+    $authResult = $userModel->authenticate($data['email'], $data['password']);
+    
+    // If auth fails but user exists, check legacy password format
+    if (!$authResult) {
+        $user = $userModel->getByEmail($data['email']);
+        if ($user && !password_verify($data['password'], $user['password'])) {
+            // Check if password matches legacy plaintext format
+            if ($user['password'] === $data['password']) {
+                // Upgrade password to hash
+                $userModel->updatePassword($user['id'], $data['password']);
+                $authResult = $userModel->authenticate($data['email'], $data['password']);
+                error_log('Password upgraded for user: ' . $data['email']);
+            }
+        }
+    }
+    if (!$authResult) {
         throw new RuntimeException('Invalid credentials', 401);
     }
-    
-    $authResult = $userModel->authenticate($user['email'], $data['password']);
 
     echo json_encode([
         'success' => true,

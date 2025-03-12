@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { sha256 } from 'js-sha256';
+import { useNavigate } from 'react-router-dom';
 import API_URL from '../assets/links';
 import HEADERS from '../assets/headers';
 
 function Login() {
+  const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -15,10 +16,17 @@ function Login() {
       const response = await fetch(API_URL + 'v0.1/login.php', {
         method: 'POST',
         headers: HEADERS,
-        body: JSON.stringify({ username, password: sha256(password) }),
-      });
+        body: JSON.stringify({ email: username, password }),
+              });
 
-      const data = await response.json();
+      let data;
+              try {
+                data = await response.json();
+              } catch (e) {
+                setError('Failed to parse response');
+                console.error("JSON parse error:", e);
+                return;
+              }
 
       if (response.ok && data.token) {
         // Store the token
@@ -26,7 +34,7 @@ function Login() {
         alert('Login successful!');
         // Redirect to gallery
       } else {
-        setError(data.message || 'Login failed');
+        setError(data.error || 'Login failed');
       }
     } catch (e) {
       setError('Failed to connect to server');
@@ -61,6 +69,13 @@ function Login() {
         </div>
         <button type="submit">Login</button>
       </form>
+      <button
+        type="button"
+        onClick={() => navigate('/signup')}
+        style={{ marginTop: '1rem' }}
+      >
+        Don't have an account? Sign up
+      </button>
     </div>
   );
 }

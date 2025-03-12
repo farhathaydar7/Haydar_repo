@@ -1,4 +1,8 @@
 <?php
+// JWT Configuration
+$jwt_secret = 'my_strong_secret_key_123!@#';
+
+// Database Configuration
 
 
 // Database configuration
