@@ -34,8 +34,15 @@ class UserModel extends UserSkeleton {
         $stmt->bindValue(':email', $user->getEmail());
         $stmt->bindValue(':password', $hashedPassword);
 
-        $stmt->execute();
-        return $this->db->lastInsertId();
+        try {
+            $stmt->execute();
+            return $this->db->lastInsertId();
+        } catch (PDOException $e) {
+            if ($e->getCode() == '23000') { // Unique constraint violation error code
+                throw new RuntimeException('Email or username already exists.', 409);
+            }
+            throw $e; // Re-throw other PDOExceptions
+        }
     }
 
     // Get user by Email
