@@ -24,8 +24,8 @@ class GalleryController {
         if ($user) {
             global $jwt_secret;
             $payload = [
-                'iss' => 'your-domain.com',
-                'aud' => 'your-domain.com',
+                'iss' => 'domain.com',
+                'aud' => 'domain.com',
                 'iat' => time(),
                 'exp' => time() + (60 * 60), // 1 hour expiration
                 'data' => [
@@ -39,7 +39,6 @@ class GalleryController {
         return false;
     }
 
-    // Existing methods (e.g. createPhoto, getPhotosByOwner, etc.) remain unchanged
     public function createPhoto($image_url, $owner_id, $title, $date, $description, $tag_id) {
         return $this->photoModel->create($image_url, $owner_id, $title, $date, $description, $tag_id);
     }
