@@ -4,6 +4,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import './App.css';
 import API_URL from './assets/links'; // Import API_URL
+import ImageUploadComponent from './components/ImageUploadComponent';
 
 function App() {
   return (
@@ -11,6 +12,7 @@ function App() {
       <Routes>
         <Route path="/" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/upload" element={<ImageUploadComponent />} />
       </Routes>
     </Router>
   );
