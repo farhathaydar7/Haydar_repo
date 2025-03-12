@@ -11,14 +11,28 @@ class PhotoModel extends PhotoSkeleton {
         $this->db = $db;
     }
 
-
-    // Create photo
-    public function create($image_url, $owner_id, $title, $date, $description, $tag_id) {
-        $stmt = $this->db->prepare("
-            INSERT INTO memory (image_url, owner_id, title, date, description, tag_id) 
-            VALUES (:image_url, :owner_id, :title, :date, :description, :tag_id)
-        ");
-        $stmt->bindParam(':image_url', $image_url);
+// Create photo (updated to handle UUID generation and image upload)
+public function create($owner_id, $title, $date, $description, $tag_id, $file) {
+    // Generate UUID before file upload
+    $image_id = uniqid('img_', true);
+    $this->setImageId($image_id);
+    
+    // Upload image and get URL
+    $image_url = $this->uploadImage($file, $owner_id, $image_id);
+    $this->setImageUrl($image_url);
+    
+    $stmt = $this->db->prepare("
+        INSERT INTO memory (image_id, image_url, owner_id, title, date, description, tag_id)
+        VALUES (:image_id, :image_url, :owner_id, :title, :date, :description, :tag_id)
+    ");
+    $stmt->bindParam(':image_id', $image_id);
+    $stmt->bindParam(':image_url', $image_url);
+    $stmt->bindParam(':owner_id', $owner_id);
+    $stmt->bindParam(':title', $title);
+    $stmt->bindParam(':date', $date);
+    $stmt->bindParam(':description', $description);
+    $stmt->bindParam(':tag_id', $tag_id);
+    $stmt->bindParam(':image_url', $image_url);
         $stmt->bindParam(':owner_id', $owner_id);
         $stmt->bindParam(':title', $title);
         $stmt->bindParam(':date', $date);
@@ -62,6 +76,60 @@ class PhotoModel extends PhotoSkeleton {
         $stmt->bindParam(':owner_id', $owner_id);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    // Upload image file
+    public function uploadImage($file, $user_id, $image_id) {
+        // Create user-specific directory structure: ../assets/photos/[user_id]/
+        $uploadDir = "../assets/photos/$user_id/";
+        
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0775, true);
+        }
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            throw new Exception('File upload error: ' . $file['error']);
+        }
+
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!in_array($file['type'], $allowedTypes)) {
+            throw new Exception('Invalid file type. Only JPG, PNG, and GIF are allowed.');
+        }
+
+        // Get file extension and create filename from image_id
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $fileName = $image_id . '.' . $ext;
+        $filePath = $uploadDir . $fileName;
+
+        if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+            throw new Exception('Failed to move uploaded file.');
+        }
+
+        return "assets/photos/$user_id/$fileName";
+        
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0775, true);
+        }
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            throw new Exception('File upload error: ' . $file['error']);
+        }
+
+        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+        if (!in_array($file['type'], $allowedTypes)) {
+            throw new Exception('Invalid file type. Only JPG, PNG, and GIF are allowed.');
+        }
+
+        // Get file extension from original name
+        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $fileName = $image_id . '.' . $ext;
+        $filePath = $uploadDir . $fileName;
+
+        if (!move_uploaded_file($file['tmp_name'], $filePath)) {
+            throw new Exception('Failed to move uploaded file.');
+        }
+
+        return "assets/photos/$user_id/$fileName";
     }
 }
 ?>
