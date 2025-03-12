@@ -1,0 +1,9 @@
+{
+    "name": "haydar/my_memories_server",
+    "autoload": {
+        "psr-4": {
+            "Haydar\\MyMemoriesServer\\": "src/"
+        }
+    },
+    "require": {}
+}
