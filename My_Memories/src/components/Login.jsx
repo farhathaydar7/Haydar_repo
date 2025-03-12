@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { sha256 } from 'js-sha256';
+import API_URL from '../assets/links';
+import HEADERS from '../assets/headers';
 
 function Login() {
   const [username, setUsername] = useState('');
@@ -10,21 +12,19 @@ function Login() {
     event.preventDefault();
     setError('');
     try {
-      const response = await fetch('My_Memories_Server/v0.1/login.php', { 
+      const response = await fetch(API_URL + 'v0.1/login.php', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: HEADERS,
         body: JSON.stringify({ username, password: sha256(password) }),
       });
 
       const data = await response.json();
 
       if (response.ok && data.token) {
-        // Store the token 
+        // Store the token
         localStorage.setItem('jwt_token', data.token);
         alert('Login successful!');
-        // Redirect to gallery 
+        // Redirect to gallery
       } else {
         setError(data.message || 'Login failed');
       }

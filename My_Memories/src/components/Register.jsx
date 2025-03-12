@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { sha256 } from 'js-sha256';
+import API_URL from '../assets/links';
+import HEADERS from '../assets/headers';
 
 function Register() {
   const [username, setUsername] = useState('');
@@ -12,11 +14,9 @@ function Register() {
     setError('');
     setSuccess('');
     try {
-      const response = await fetch('My_Memories_Server/v0.1/register.php', { // Adjust path if necessary
+      const response = await fetch(API_URL + 'v0.1/register.php', { // Adjust path if necessary
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: HEADERS,
         body: JSON.stringify({ username, password: sha256(password) }),
       });
 

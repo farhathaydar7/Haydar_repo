@@ -17,6 +17,11 @@ try {
 // JWT configuration
 $jwt_secret = 'my_TOP_secret_JWT_secret_KEY';
 
+// Allow CORS
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
+
 // Include models
 require_once __DIR__ . '/models/User.Model.php';
 require_once __DIR__ . '/models/Photo.Model.php';
