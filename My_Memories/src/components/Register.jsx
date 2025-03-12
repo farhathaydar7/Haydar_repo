@@ -27,7 +27,7 @@ function Register() {
 
       if (response.ok && data.success) {
         setSuccess('User registered successfully');
-        navigate('/login');
+        navigate('/');
       } else {
         setError(data.error || 'Registration failed');
       }

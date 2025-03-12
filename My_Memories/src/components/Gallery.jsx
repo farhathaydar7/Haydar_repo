@@ -1,50 +1,96 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import API_URL from '../assets/links.jsx';
+
+const Skeleton = ({ height, className }) => (
+  <div
+    className={`bg-gray-200 animate-pulse rounded-lg ${className}`}
+    style={{ height }}
+  />
+);
 
 const GalleryComponent = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTag, setSelectedTag] = useState('Family');
-  
-  // Mock data
-  const tags = [
-    { name: 'Family', count: 24 },
-    { name: 'Tag 2', count: 15 },
-    { name: 'Tag 3', count: 8 }
-  ];
+  const [selectedTag, setSelectedTag] = useState(null);
+  const [galleryData, setGalleryData] = useState({ tags: [], images: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const images = Array(12).fill(null); // 12 placeholder images
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const token = localStorage.getItem('token');
+        const params = new URLSearchParams({
+          owner_id: 1, // Replace with actual owner ID
+          search: searchQuery,
+          tag: selectedTag || '',
+        });
+
+        const response = await fetch(`${API_URL}v0.1/fill_gallery.php?${params}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (!response.ok) throw new Error('Failed to fetch data');
+        const data = await response.json();
+        
+        setGalleryData({
+          tags: data.tags,
+          images: data.images.filter(img => img.image_data) // Filter out invalid images
+        });
+        
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    const debounceTimer = setTimeout(fetchData, 300);
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, selectedTag]);
 
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <div className="w-64 bg-white border-r border-gray-200 p-4">
+      <div className="w-64 bg-white border-r border-gray-200 p-4 overflow-y-auto">
         <h2 className="text-lg font-semibold mb-4">Tags</h2>
-        
         <div className="space-y-2">
-          {tags.map(tag => (
-            <div
-              key={tag.name}
-              className={`flex justify-between items-center p-2 rounded cursor-pointer ${
-                selectedTag === tag.name ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'
-              }`}
-              onClick={() => setSelectedTag(tag.name)}
-            >
-              <span>{tag.name}</span>
-              <span className="text-sm text-gray-500">{tag.count}</span>
-            </div>
-          ))}
+          {loading ? (
+            Array(3).fill().map((_, i) => (
+              <Skeleton key={i} height={40} className="w-full" />
+            ))
+          ) : error ? (
+            <div className="text-red-500">{error}</div>
+          ) : (
+            galleryData.tags.map(tag => (
+              <div
+                key={tag.tag_id}
+                className={`flex justify-between items-center p-2 rounded cursor-pointer ${
+                  selectedTag === tag.tag_id ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'
+                }`}
+                onClick={() => setSelectedTag(tag.tag_id === selectedTag ? null : tag.tag_id)}
+              >
+                <span className="truncate">{tag.tag_name}</span>
+                <span className="text-sm text-gray-500">{tag.count}</span>
+              </div>
+            ))
+          )}
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 p-8">
-        {/* Header */}
+      <div className="flex-1 p-8 overflow-y-auto">
         <div className="mb-8">
-          <div className="flex justify-between items-center mb-6">
-            <h1 className="text-2xl font-bold">{selectedTag}</h1>
-            <div className="relative w-64">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <h1 className="text-2xl font-bold truncate">
+              {selectedTag 
+                ? galleryData.tags.find(t => t.tag_id === selectedTag)?.tag_name 
+                : 'All Photos'}
+            </h1>
+            <div className="w-full md:w-64">
               <input
                 type="text"
-                placeholder="Search"
+                placeholder="Search memories..."
                 className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -53,16 +99,49 @@ const GalleryComponent = () => {
           </div>
         </div>
 
-        {/* Image Grid */}
-        <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {images.map((_, index) => (
-            <div key={index} className="aspect-square bg-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-              {/* Replace div below with actual image component */}
-              <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">
-                Image {index + 1}
-              </div>
+        <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
+          {loading ? (
+            Array(12).fill().map((_, i) => (
+              <Skeleton key={i} className="aspect-square mb-4" />
+            ))
+          ) : error ? (
+            <div className="text-center py-8 text-red-500">{error}</div>
+          ) : galleryData.images.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No photos found {searchQuery ? `for "${searchQuery}"` : ''}
             </div>
-          ))}
+          ) : (
+            galleryData.images.map((image) => (
+              <div 
+                key={image.image_id}
+                className="mb-4 break-inside-avoid relative group"
+              >
+                <img
+                  src={`data:${image.mime_type};base64,${image.image_data}`}
+                  alt={image.title}
+                  className="w-full h-auto rounded-lg shadow-sm transition-transform duration-200 hover:scale-105"
+                  loading="lazy"
+                  onError={(e) => {
+                    console.error('Invalid image data for:', image.image_id);
+                    e.target.style.display = 'none';
+                  }}
+                  onLoad={(e) => {
+                    console.log('Loaded image dimensions:',
+                      e.target.naturalWidth, 'x', e.target.naturalHeight);
+                  }}
+                />
+                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-end p-4 opacity-0 group-hover:opacity-100">
+                  <div className="text-white">
+                    <h3 className="font-semibold truncate">{image.title}</h3>
+                    <p className="text-sm truncate">{image.description}</p>
+                    <time className="text-xs opacity-75">
+                      {new Date(image.date).toLocaleDateString()}
+                    </time>
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
