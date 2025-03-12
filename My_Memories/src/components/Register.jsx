@@ -23,11 +23,11 @@ function Register() {
 
       const data = await response.json();
 
-      if (response.ok && data.message === 'User registered successfully') {
-        setSuccess(data.message);
+      if (response.ok && data.success) {
+        setSuccess('User registered successfully');
         // Optionally redirect to login page after successful registration
       } else {
-        setError(data.message || 'Registration failed');
+        setError(data.error || 'Registration failed');
       }
     } catch (e) {
       setError('Failed to connect to server');
