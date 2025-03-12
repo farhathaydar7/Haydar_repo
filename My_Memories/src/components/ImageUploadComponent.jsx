@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import API_URL from '../assets/links';
+
 const ImageUploadComponent = () => {
+  // ... (keep all existing state and handler declarations unchanged)
+
   const [previewUrl, setPreviewUrl] = useState(null);
   const [base64Image, setBase64Image] = useState('');
   const [isDragging, setIsDragging] = useState(false);
@@ -17,7 +20,16 @@ const ImageUploadComponent = () => {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      const base64String = e.target.result.split(',')[1];
+      // Log the full data URL for debugging
+      console.log('Full data URL:', e.target.result);
+      const parts = e.target.result.split(',');
+      if (parts.length < 2) {
+        console.error('Unexpected file reader result format.');
+        return;
+      }
+      const base64String = parts[1];
+      console.log('Base64 image string:', base64String);
+      console.log('Base64 image string:', base64String);
       setPreviewUrl(e.target.result);
       setBase64Image(base64String);
     };
@@ -61,77 +73,99 @@ const ImageUploadComponent = () => {
       return;
     }
 
+    // Logging cleanup (remove duplicates)
+    console.log('Submitting image (first 50 chars):', base64Image.substring(0, 50) + '...');
+    console.log('Base64Image length (bytes):', base64Image.length);
+
     const payload = {
       image: base64Image,
       title: memoryTitle,
       date: memoryDate,
-      tags: tags,
+      tag_id: tags,
       description: description,
     };
 
     try {
-      const response = await fetch(
-        API_URL + 'v0.1/upload.php',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      const response = await fetch(API_URL + 'v0.1/upload.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
 
-      const data = await response.json();
+      const text = await response.text();
+      console.log('Raw server response:', text);
 
-      if (response.ok) {
-        console.log('Upload successful:', data);
-        if (data.filePath) {
-          alert('Image uploaded successfully! File path: ' + data.filePath);
-          // Optionally handle success - clear form, redirect, etc.
-        } else {
-          alert('Error: No file path received from the server.');
-        }
+      let data;
+      try {
+        data = JSON.parse(text);
+      // eslint-disable-next-line no-unused-vars
+      } catch (e) {
+        // Handle non-JSON responses
+        console.error('Invalid JSON:', text);
+        data = { error: `Server returned invalid response: ${text}` };
+      }
+
+      if (!response.ok) {
+        const errorMessage = data.error || data.message || response.statusText;
+        console.error('Upload failed:', errorMessage);
+        alert(`Error uploading image: ${errorMessage}`);
       } else {
-        console.error('Error uploading image:', data);
-        alert('Error uploading image: ' + (data.message || response.statusText));
+        alert(`Image uploaded successfully! File path: ${data.filePath}`);
+        // Reset form after successful upload
+        setPreviewUrl(null);
+        setBase64Image('');
+        setMemoryTitle('');
+        setMemoryDate('');
+        setTags('');
+        setDescription('');
       }
     } catch (error) {
-      console.error('Error uploading image:', error);
-      alert('Error uploading image: ' + error.message);
+      console.error('Network or parsing error:', error);
+      alert(`Error uploading image: ${error.message}`);
     }
   };
 
+  // ... (keep the return statement and JSX unchanged)
   return (
     <div className="image-upload-container">
       <h1>Upload Memory</h1>
       <div
-        className={`drag-drop-area ${isDragging ? 'dragging' : ''}`}
-        onDragOver={onDragOver}
-        onDragLeave={onDragLeave}
-        onDrop={onDrop}
+  className={`drag-drop-area ${isDragging ? 'dragging' : ''}`}
+  onDragOver={onDragOver}
+  onDragLeave={onDragLeave}
+  onDrop={onDrop}
+>
+  <div className="drag-drop-content">
+    <i className="bi bi-cloud-upload"></i>
+    <p>Drag and drop your image here or</p>
+    <label className="upload-btn">
+      <input
+        type="file"
+        onChange={onFileSelected}
+        accept="image/*"
+        style={{ display: 'none' }}
+      />
+      Browse Files
+    </label>
+  </div>
+  {previewUrl && ( // Fixed the syntax here (replaced `:` with `&&`)
+    <div className="image-preview">
+      <img 
+        src={previewUrl} 
+        alt="Preview" 
+        style={{ maxWidth: '200px', maxHeight: '200px' }} 
+      />
+      <button 
+        type="button" 
+        className="remove-btn" 
+        onClick={removeImage}
+        aria-label="Remove image"
       >
-        <div className="drag-drop-content">
-          <i className="bi bi-cloud-upload"></i>
-          <p>Drag and drop your image here or</p>
-          <label className="upload-btn">
-            <input
-              type="file"
-              onChange={onFileSelected}
-              accept="image/*"
-              style={{ display: 'none' }}
-            />
-            Browse Files
-          </label>
-        </div>
-        {previewUrl && (
-          <div className="image-preview">
-            <img src={previewUrl} alt="Preview" style={{maxWidth: '200px', maxHeight: '200px'}} />
-            <button type="button" className="remove-btn" onClick={removeImage}>
-              ×
-            </button>
-          </div>
-        )}
-      </div>
+        ×
+      </button>
+    </div>
+  )}
+</div>
 
       <div className="form-inputs">
         <label htmlFor="memoryTitle">Memory Title:</label>

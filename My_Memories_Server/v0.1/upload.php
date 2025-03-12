@@ -1,12 +1,16 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
+require_once __DIR__.'/../config.php';
+require_once __DIR__.'/../models/Photo.Model.php';
+$photoModel = new PhotoModel();
+
+header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
-require_once __DIR__.'/../config.php';
-require_once __DIR__.'/../models/Photo.Model.php';
-
-header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -18,44 +22,70 @@ try {
         throw new Exception('Method not allowed', 405);
     }
 
-    // Ensure user is logged in (check for Authorization header and JWT) - you might want to implement JWT verification here as in auth.php
+    $request_body = file_get_contents('php://input');
+    $data = json_decode($request_body, true);
 
-    if (!isset($_FILES['image']) || $_FILES['image']['error'] !== UPLOAD_ERR_OK) {
-        throw new InvalidArgumentException('No image uploaded or upload error', 400);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new Exception("Invalid JSON input: " . json_last_error_msg(), 400);
     }
 
-    $owner_id = 1; // Replace with actual user ID from JWT if you implement user authentication
-    $title = $_POST['title'] ?? 'Untitled';
-    $date = $_POST['date'] ?? date('Y-m-d'); // Default to today's date
-    $description = $_POST['description'] ?? '';
-    $tag_id = $_POST['tag_id'] ?? null; // Or 0, depending on your needs
+    if (!isset($data['image']) || empty($data['image'])) {
+        throw new InvalidArgumentException('No image data provided', 400);
+    }
 
-    $photoModel = new PhotoModel();
-    $image_url = $photoModel->uploadImage($_FILES['image'], $owner_id, uniqid('img_', true)); // Using uniqid for image_id
+    $base64Image = $data['image'];
+    $imageData = base64_decode($base64Image);
+    if ($imageData === false) {
+        throw new InvalidArgumentException('Invalid base64 image data', 400);
+    }
 
-    if ($image_url) {
-        // After successful upload, you might want to create a database entry as well, similar to PhotoModel::create, but without re-uploading
-        $memoryCreated = $photoModel->create($owner_id, $title, $date, $description, $tag_id, $_FILES['image']);
-        if($memoryCreated){
-            http_response_code(201);
-            echo json_encode(['success' => true, 'message' => 'Image uploaded successfully', 'image_url' => $image_url]);
-        } else {
-            http_response_code(500);
-            echo json_encode(['success' => false, 'message' => 'Image uploaded to server but failed to save memory info to database']);
-        }
+    // No temporary file needed for base64 upload, pass imageData directly
 
+    // Retrieve additional data from the JSON payload
+    $owner_id = 1; // Replace with actual user ID if authentication is implemented
+    $title = $data['title'] ?? 'Untitled';
+    $date = $data['date'] ?? date('Y-m-d');
+    $description = $data['description'] ?? '';
+    $tag_id = $data['tag_id'] ?? null;
+
+    
+        // Directly call create() with all parameters
+        $memoryCreated = $photoModel->create(
+            $owner_id,
+            $title,
+            $date,
+            $description,
+            $tag_id,
+            $imageData // Pass base64 data directly
+        );
+
+    if ($memoryCreated) {
+        echo json_encode([
+            'success'   => true,
+            'message'   => 'Image uploaded successfully',
+            'filePath' => $memoryCreated // Return the file path
+        ]);
+        exit();
     } else {
-        throw new RuntimeException('Image upload failed', 500);
+        http_response_code(500);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Image uploaded but failed to save memory info to database'
+        ]);
+        exit();
     }
-
 } catch (InvalidArgumentException $e) {
     http_response_code(400);
     echo json_encode(['error' => $e->getMessage()]);
+    exit();
 } catch (RuntimeException $e) {
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);
+    exit();
 } catch (Exception $e) {
     http_response_code($e->getCode() ?: 500);
     echo json_encode(['error' => $e->getMessage()]);
+    exit();
 }
+
 ?>

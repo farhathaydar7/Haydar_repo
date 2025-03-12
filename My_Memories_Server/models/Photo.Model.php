@@ -5,34 +5,25 @@ require_once '../skeletons/Photo.Skeleton.php';
 class PhotoModel extends PhotoSkeleton {
     private $db;
 
-    function PhotoModel($image_id = null, $image_url = null, $owner_id = null, $title = null, $date = null, $description = null, $tag_id = null) {
-        $this->PhotoSkeleton($image_id, $image_url, $owner_id, $title, $date, $description, $tag_id);
+    public function __construct() {
         global $db;
         $this->db = $db;
+        if (!$this->db) {
+            throw new Exception("Database connection not initialized");
+        }
     }
 
-// Create photo (updated to handle UUID generation and image upload)
-public function create($owner_id, $title, $date, $description, $tag_id, $file) {
-    // Generate UUID before file upload
-    $image_id = uniqid('img_', true);
-    $this->setImageId($image_id);
-    
-    // Upload image and get URL
-    $image_url = $this->uploadImage($file, $owner_id, $image_id);
-    $this->setImageUrl($image_url);
-    
-    $stmt = $this->db->prepare("
-        INSERT INTO memory (image_id, image_url, owner_id, title, date, description, tag_id)
-        VALUES (:image_id, :image_url, :owner_id, :title, :date, :description, :tag_id)
-    ");
-    $stmt->bindParam(':image_id', $image_id);
-    $stmt->bindParam(':image_url', $image_url);
-    $stmt->bindParam(':owner_id', $owner_id);
-    $stmt->bindParam(':title', $title);
-    $stmt->bindParam(':date', $date);
-    $stmt->bindParam(':description', $description);
-    $stmt->bindParam(':tag_id', $tag_id);
-    $stmt->bindParam(':image_url', $image_url);
+    public function create($owner_id, $title, $date, $description, $tag_id, $imageData) {
+        if (!$this->db) {
+            throw new Exception("Database connection not available");
+        }
+        $image_id = uniqid('img_', true);
+        $image_url = $this->uploadImage($imageData, $owner_id, $image_id);
+
+        // Single database insertion
+        $stmt = $this->db->prepare("INSERT INTO memory (image_id, image_url, owner_id, title, date, description, tag_id) VALUES (:image_id, :image_url, :owner_id, :title, :date, :description, :tag_id)");
+        $stmt->bindParam(':image_id', $image_id);
+        $stmt->bindParam(':image_url', $image_url);
         $stmt->bindParam(':owner_id', $owner_id);
         $stmt->bindParam(':title', $title);
         $stmt->bindParam(':date', $date);
@@ -52,8 +43,8 @@ public function create($owner_id, $title, $date, $description, $tag_id, $file) {
     // Update photo
     public function update($image_id, $title, $description, $tag_id) {
         $stmt = $this->db->prepare("
-            UPDATE memory 
-            SET title = :title, description = :description, tag_id = :tag_id 
+            UPDATE memory
+            SET title = :title, description = :description, tag_id = :tag_id
             WHERE image_id = :image_id
         ");
         $stmt->bindParam(':title', $title);
@@ -78,73 +69,37 @@ public function create($owner_id, $title, $date, $description, $tag_id, $file) {
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    // Upload image file
     public function uploadImage($file, $user_id, $image_id) {
-        // Create user-specific directory structure: ../assets/photos/[user_id]/
-        $uploadDir = "../assets/photos/$user_id/";
-        
+        // Remove all $_FILES references
+        error_log("Processing base64 image data");
+
+        $uploadDir = __DIR__ . "/../assets/photos/$user_id/";
         if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0775, true);
+            if (!mkdir($uploadDir, 0775, true)) {
+                $error = error_get_last();
+                error_log("Failed to create directory $uploadDir, details: " . $error['message']);
+                throw new Exception("Failed to create directory for uploads");
+            }
         }
 
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            throw new Exception('File upload error: ' . $file['error']);
+        // Handle base64 data directly
+        $image = base64_decode($file);
+        if ($image === false) {
+            error_log("Base64 decode failed for image $image_id");
+            throw new Exception('Invalid base64 data');
         }
 
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        if (!in_array($file['type'], $allowedTypes)) {
-            throw new Exception('Invalid file type. Only JPG, PNG, and GIF are allowed.');
-        }
-
-        // Get file extension and create filename from image_id
-        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $fileName = $image_id . '.' . $ext;
+        $fileName = "$image_id.png"; // Use UUID as filename
         $filePath = $uploadDir . $fileName;
 
-        if (!move_uploaded_file($file['tmp_name'], $filePath)) {
-            throw new Exception('Failed to move uploaded file.');
-        }
-
-        return "assets/photos/$user_id/$fileName";
-        
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0775, true);
-        }
-
-        if ($file['error'] !== UPLOAD_ERR_OK) {
-            throw new Exception('File upload error: ' . $file['error']);
-        }
-
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        if (!in_array($file['type'], $allowedTypes)) {
-            throw new Exception('Invalid file type. Only JPG, PNG, and GIF are allowed.');
-        }
-
-        // Get file extension from original name
-        $ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $fileName = $image_id . '.' . $ext;
-        $filePath = $uploadDir . $fileName;
-
-        if (!move_uploaded_file($file['tmp_name'], $filePath)) {
-            throw new Exception('Failed to move uploaded file.');
+        if (!file_put_contents($filePath, $image)) {
+            $error = error_get_last();
+            error_log("Failed to save image to $filePath, details: " . $error['message']);
+            throw new Exception('Failed to save image');
         }
 
         return "assets/photos/$user_id/$fileName";
     }
 
-    // Get all photos by tag
-    public function getAllByTag($tag_id) {
-        $stmt = $this->db->prepare("SELECT * FROM memory WHERE tag_id = :tag_id");
-        $stmt->bindParam(':tag_id', $tag_id);
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
-
-    // Get all photos
-    public function getAll() {
-        $stmt = $this->db->prepare("SELECT * FROM memory");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    }
 }
 ?>
