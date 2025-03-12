@@ -14,6 +14,7 @@ try {
     
     $userModel = new UserModel();
     $userId = $userModel->create([
+        'username' => $data['username'] ?? '',
         'email' => $data['email'] ?? '',
         'password' => $data['password'] ?? ''
     ]);
