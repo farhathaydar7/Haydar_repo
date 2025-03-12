@@ -24,17 +24,35 @@ try {
         throw new InvalidArgumentException('Invalid request body', 400);
     }
 
+    // Validate email format
+    if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+        throw new InvalidArgumentException('Invalid email format', 400);
+    }
+
+    // Validate password length
+    if (strlen($data['password']) < 8) {
+        throw new InvalidArgumentException('Password must be at least 8 characters', 400);
+    }
+
     $userModel = new UserModel();
     
-    // Temporary debug logging
-    error_log('Login attempt for: ' . $data['email']);
-    
+    // Add detailed logging
+    error_log('Login attempt details: ' . print_r([
+        'email' => $data['email'],
+        'password_length' => strlen($data['password'])
+    ], true));
+
+    $user = $userModel->getByEmail($data['email']);
+    error_log('User lookup result: ' . print_r($user, true));
+
     $authResult = $userModel->authenticate($data['email'], $data['password']);
     
     // If auth fails but user exists, check legacy password format
     if (!$authResult) {
         $user = $userModel->getByEmail($data['email']);
-        if ($user && !password_verify($data['password'], $user['password'])) {
+        if ($user) {
+            error_log('Stored password hash: ' . $user['password']);
+            error_log('Password verify result: ' . password_verify($data['password'], $user['password']) ? 'true' : 'false');
             // Check if password matches legacy plaintext format
             if ($user['password'] === $data['password']) {
                 // Upgrade password to hash
@@ -45,6 +63,7 @@ try {
         }
     }
     if (!$authResult) {
+        error_log("Authentication failed for user: " . $data['email']);
         throw new RuntimeException('Invalid credentials', 401);
     }
 

@@ -18,8 +18,7 @@ try {
     die("Database connection failed: " . $e->getMessage());
 }
 
-// JWT configuration
-$jwt_secret = 'my_TOP_secret_JWT_secret_KEY';
+
 
 // Allow CORS
 header("Access-Control-Allow-Origin: *");

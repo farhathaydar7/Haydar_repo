@@ -15,25 +15,37 @@ function Register() {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
-    setSuccess('');
+
+    // Basic validation
+    if (!username || !email || !password) {
+      setError('All fields are required');
+      return;
+    }
+
+    if (password.length < 8) {
+      setError('Password must be at least 8 characters');
+      return;
+    }
+
     try {
-      const response = await fetch(API_URL + 'v0.1/register.php', { // Adjust path if necessary
+      const response = await fetch(API_URL + 'v0.1/register.php', {
         method: 'POST',
         headers: HEADERS,
-        body: JSON.stringify({ username, email, password: sha256(password) }),
+        body: JSON.stringify({ username, email, password: sha256(password) })
       });
 
       const data = await response.json();
 
-      if (response.ok && data.success) {
-        setSuccess('User registered successfully');
-        navigate('/');
-      } else {
-        setError(data.error || 'Registration failed');
+      if (!response.ok) {
+        throw new Error(data.error || 'Registration failed');
       }
-    } catch (e) {
-      setError('Failed to connect to server');
-      console.error("Registration error:", e);
+
+      setSuccess('Registration successful! Please login');
+      navigate('/login');
+
+    } catch (error) {
+      console.error('Registration error:', error);
+      setError(error.message || 'Registration failed');
     }
   };
 

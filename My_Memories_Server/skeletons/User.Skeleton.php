@@ -12,9 +12,7 @@ class UserSkeleton {
         $this->id = $id;
         $this->username = $username;
         $this->email = $email;
-        if ($password !== null) {
-            $this->password = password_hash($password, PASSWORD_BCRYPT);
-        }
+        $this->password = $password;
     }
 
     // Getters and Setters
@@ -43,7 +41,7 @@ class UserSkeleton {
         return $this->password;
     }
     public function setPassword($password) {
-        $this->password = password_hash($password, PASSWORD_BCRYPT);
+        $this->password = $password;
     }
 }
 ?>

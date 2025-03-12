@@ -17,37 +17,64 @@ class UserModel extends UserSkeleton {
 
     // Create user and return ID
     public function create(array $data) {
-        $stmt = $this->db->prepare("
-            INSERT INTO users (username, email, password)
-            VALUES (:username, :email, :password)
-        ");
+        // Validate required fields
+        if (!isset($data['username'], $data['email'], $data['password'])) {
+            throw new InvalidArgumentException('Missing required fields', 400);
+        }
+
+        // Normalize email
+        $data['email'] = strtolower(trim($data['email']));
+        $data['username'] = trim($data['username']);
+
+        // Validate email format
+        if (!filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('Invalid email format', 400);
+        }
+
+        // Validate password strength
+        if (strlen($data['password']) < 8) {
+            throw new InvalidArgumentException('Password must be at least 8 characters', 400);
+        }
+
+        // Hash password first
+        $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
 
         $user = new UserSkeleton(
             null,
             $data['username'],
             $data['email'],
-            $data['password']
+            $hashedPassword  // Store hashed password in the object
         );
-        $hashedPassword = $user->getPassword();
 
-        $stmt->bindValue(':username', $user->getUsername());
-        $stmt->bindValue(':email', $user->getEmail());
-        $stmt->bindValue(':password', $hashedPassword);
+        $stmt = $this->db->prepare("
+            INSERT INTO users (username, email, password)
+            VALUES (:username, :email, :password)
+        ");
 
         try {
-            $stmt->execute();
+            $stmt->execute([
+                ':username' => $user->getUsername(),
+                ':email' => $user->getEmail(),
+                ':password' => $user->getPassword()  // Use the hashed value
+            ]);
+            
+            error_log("User created: " . $data['email']);
             return $this->db->lastInsertId();
+            
         } catch (PDOException $e) {
-            if ($e->getCode() == '23000') { // Unique constraint violation error code
-                throw new RuntimeException('Email or username already exists.', 409);
+            error_log("Registration error: " . $e->getMessage());
+            if ($e->getCode() == '23000') {
+                throw new RuntimeException('Email or username already exists', 409);
             }
-            throw $e; // Re-throw other PDOExceptions
+            throw new RuntimeException('Registration failed', 500);
         }
     }
 
     // Get user by Email
     public function getByEmail($email) {
-        $stmt = $this->db->prepare("SELECT * FROM users WHERE email = :email");
+        // Convert email to lowercase for case-insensitive search
+        $email = strtolower($email);
+        $stmt = $this->db->prepare("SELECT * FROM users WHERE LOWER(email) = :email");
         $stmt->bindParam(':email', $email);
         $stmt->execute();
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -91,25 +118,43 @@ class UserModel extends UserSkeleton {
 
 // Authenticate user and return JWT
 public function authenticate(string $email, string $password): ?array {
-    $stmt = $this->db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
-    $stmt->bindParam(':email', $email);
-    $stmt->execute();
-    $userData = $stmt->fetch(PDO::FETCH_ASSOC);
+    $email = strtolower($email);
+    $user = $this->getByEmail($email);
 
-    if ($userData && password_verify($password, $userData['password'])) {
-        $user = new UserSkeleton(
-            $userData['id'],
-            $userData['username'],
-            $userData['email'],
-            $userData['password']
-        );
-
-        return [
-            'user' => $user,
-            'token' => $this->generateJwt($user)
-        ];
+    if (!$user) {
+        error_log("User not found: $email");
+        return null;
     }
+
+    if (password_verify($password, $user['password'])) {
+        return $this->createAuthResult($user);
+    }
+
+    // Legacy password check
+    if ($user['password'] === $password) {
+        $this->updatePassword($user['id'], $password);
+        return $this->createAuthResult($user);
+    }
+
+    error_log("Password mismatch for user: $email");
     return null;
+}
+
+private function createAuthResult(array $user): array {
+    return [
+        'user' => new UserSkeleton(
+            $user['id'],
+            $user['username'],
+            $user['email'],
+            $user['password']
+        ),
+        'token' => $this->generateJwt(new UserSkeleton(
+            $user['id'],
+            $user['username'],
+            $user['email'],
+            $user['password']
+        ))
+    ];
 }
 
 // Generate JWT token
