@@ -1,39 +1,37 @@
-/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Outlet } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 
-const Auth = ({ children }) => {
+const Auth = () => {
   const navigate = useNavigate();
-  const [isLoading, setIsLoading] = useState(true);
+  const [isValid, setIsValid] = useState(false);
 
   useEffect(() => {
     const token = localStorage.getItem('jwt_token');
+    
     if (!token) {
-      navigate('/'); // Redirect to login
+      navigate('/');
       return;
     }
 
     try {
-      const decodedToken = jwtDecode(token);
-      const currentTime = Date.now() / 1000;
-      if (decodedToken.exp < currentTime) {
-        localStorage.removeItem('jwt_token');
-        navigate('/'); // Redirect to login
-      } else {
-        setIsLoading(false);
+      const decoded = jwtDecode(token);
+      if (decoded.exp < Date.now() / 1000) {
+        throw new Error('Token expired');
       }
+      setIsValid(true);
+    // eslint-disable-next-line no-unused-vars
     } catch (error) {
       localStorage.removeItem('jwt_token');
-      navigate('/'); // Redirect to login
+      navigate('/');
     }
   }, [navigate]);
 
-  if (isLoading) {
-    return <div>Loading...</div>;
+  if (!isValid) {
+    return <div style={{ padding: '20px' }}>Verifying authentication...</div>;
   }
 
-  return <>{children}</>;
+  return <Outlet />; // This renders the nested route's element
 };
 
 export default Auth;

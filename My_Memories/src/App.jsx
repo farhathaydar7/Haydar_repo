@@ -1,18 +1,21 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, Outlet } from 'react-router-dom';
 import Login from './components/Login';
 import Register from './components/Register';
 import GalleryComponent from './components/Gallery';
 import ImageUploadComponent from './components/ImageUpload';
 import Auth from './components/Auth';
 import Navbar from './components/Navbar';
-import './App.css';
+import UpdateImage from './components/UpdateImage';
+import PhotoDetail from './components/PhotoDetail';
 
-// ProtectedLayout wraps authenticated pages with Auth and the Navbar.
-const ProtectedLayout = ({ children }) => (
+// Updated Protected Layout
+const ProtectedLayout = () => (
   <Auth>
     <Navbar />
-    {children}
+    <main style={{ marginTop: '60px' }}> {}
+      <Outlet /> {}
+    </main>
   </Auth>
 );
 
@@ -25,22 +28,15 @@ function App() {
         <Route path="/register" element={<Register />} />
 
         {/* Protected routes */}
-        <Route
-          path="/gallery"
-          element={
-            <ProtectedLayout>
-              <GalleryComponent />
-            </ProtectedLayout>
-          }
-        />
-        <Route
-          path="/upload"
-          element={
-            <ProtectedLayout>
-              <ImageUploadComponent />
-            </ProtectedLayout>
-          }
-        />
+        <Route element={<ProtectedLayout />}>
+          <Route path="/gallery" element={<GalleryComponent />} />
+          <Route path="/upload" element={<ImageUploadComponent />} />
+          <Route path="/update/:photoId" element={<UpdateImage />} />
+          <Route path="/photos/:photoId" element={<PhotoDetail />} />
+        </Route>
+
+        {/* Catch-all route */}
+        <Route path="*" element={<h1>404 Not Found</h1>} />
       </Routes>
     </Router>
   );

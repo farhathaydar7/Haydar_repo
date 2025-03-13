@@ -283,3 +283,28 @@ html, body, #root {
     font-size: 14px;
   }
 }
+.edit-button {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  padding: 5px 10px;
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.edit-button:hover {
+  background: rgba(0, 0, 0, 0.9);
+}
+
+.image-overlay {
+  position: relative;
+}
+
+.image-info {
+  position: relative;
+  padding-bottom: 30px; /* Make space for edit button */
+}
