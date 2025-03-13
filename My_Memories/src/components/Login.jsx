@@ -32,10 +32,16 @@ function Login() {
       }
 
       if (response.ok && data.token) {
+        // Store token
         localStorage.setItem('jwt_token', data.token);
-        alert('Login successful!');
-        navigate('/gallery');
-      } else {
+        
+        // Store user information
+        localStorage.setItem('user', JSON.stringify({
+          id: data.user_id,
+          email: data.email
+        }));
+        navigate('/gallery'); }
+        else {
         setError(data.error || 'Login failed');
       }
     } catch (e) {

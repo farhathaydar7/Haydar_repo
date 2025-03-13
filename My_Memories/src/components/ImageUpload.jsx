@@ -17,20 +17,22 @@ const Upload = () => {
   const [error, setError] = useState('');
   const [userId, setUserId] = useState(null);
 
-  // Get user ID from localStorage
+  // Get user info from localStorage
   useEffect(() => {
-    const user = localStorage.getItem('user');
-    if (user) {
+    // Get user info from localStorage
+    const userString = localStorage.getItem('user');
+    if (userString) {
       try {
-        const userData = JSON.parse(user);
-        if (userData && userData.id) {
-          setUserId(userData.id);
-        }
-      } catch (e) {
-        console.error('Failed to parse user data:', e);
+        const userData = JSON.parse(userString);
+        setUserId(userData.id);
+      } catch (error) {
+        console.error('Failed to parse user data:', error);
+        navigate('/'); // Redirect to login if data is invalid
       }
+    } else {
+      navigate('/'); // Redirect to login if no user data
     }
-  }, []);
+  }, [navigate]);
 
   // Handle file upload logic
   const handleFile = (file) => {
@@ -260,7 +262,7 @@ const Upload = () => {
 
         <button 
           onClick={onSubmit}
-          disabled={!base64Image || !userId}
+          // disabled={!base64Image || !userId}
           className="upload-button"
         >
           Upload Memory
