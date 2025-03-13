@@ -117,7 +117,7 @@ const GalleryComponent = () => {
           <div className="gallery-sidebar">
             <div className="sidebar-header">
               <h2>Name</h2>
-              <p className="pic-count"># of pics</p>
+              {/* <p className="pic-count"># of pics</p> */}
             </div>
             <div className="search-container">
               <input
