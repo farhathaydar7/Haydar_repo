@@ -1,0 +1,149 @@
+/* Updated Login.css (Scroll Issue Fixed) */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden; /* Prevents unwanted scrolling */
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #fff;
+}
+
+/* Main container spanning full width and height */
+.login-page {
+  display: flex;
+  width: 100%;
+  height: 100vh; /* Exactly 100% of viewport height */
+}
+
+/* Left panel: 75% width, fully centered */
+.login-left {
+  flex: 3;  /* 75% width */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0; /* No extra padding */
+  background-color: #fff;
+  border-right: 1px solid #ddd;
+  height: 100vh; /* Exactly 100% of viewport height */
+  text-align: center;
+}
+
+/* Right panel: 25% width, fully centered */
+.login-right {
+  flex: 1;  /* 25% width */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0; /* No extra padding */
+  background-color: #eaf6ff;
+  }
+  
+  .memories-icon {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 0.75rem;
+  }
+  
+  .brand-name {
+    font-size: 1.8rem;
+    margin-bottom: 0.25rem;
+    font-weight: 600;
+  }
+  
+  .login-title {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 2rem;
+  }
+  
+  /* Login Form Styling */
+  .login-form {
+    width: 100%;
+    max-width: 350px;
+  }
+  
+  .error-message {
+    color: red;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    text-align: center;
+  }
+  
+  .input-group {
+    margin-bottom: 1.4rem;
+  }
+  
+  .field-label {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    color: #333;
+  }
+  
+  .forgot-link {
+    font-size: 0.85rem;
+    color: #007bff;
+    text-decoration: none;
+    margin-left: 1rem;
+  }
+  
+  .forgot-link:hover {
+    text-decoration: underline;
+  }
+  
+  .login-form input {
+    width: 100%;
+    padding: 0.65rem 1rem;
+    border: 2px solid #ccc;
+    border-radius: 30px;
+    font-size: 0.95rem;
+    outline: none;
+  }
+  
+  /* Login Button */
+  .login-button {
+    width: 100%;
+    padding: 0.65rem;
+    background-color: #000;
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    font-size: 1rem;
+    cursor: pointer;
+    margin-top: 0.5rem;
+  }
+  
+  .login-button:hover {
+    background-color: #333;
+  }
+  
+  /* Right Panel Content */
+  .new-here {
+    font-size: 1.4rem;
+    margin-bottom: 0.5rem;
+  }
+  
+  .discover-text {
+    margin-bottom: 1.5rem;
+    color: #555;
+    max-width: 220px;
+  }
+  
+  .signup-button {
+    padding: 0.6rem 1.5rem;
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  
+  .signup-button:hover {
+    background-color: #0056b3;
+  }
+  
