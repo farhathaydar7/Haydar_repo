@@ -58,9 +58,11 @@ const GalleryComponent = () => {
   const GalleryImage = ({ image }) => {
     const [loadError, setLoadError] = useState(false);
     if (!image.image_data || !image.mime_type) return null;
-    
+
     return (
       <div className="gallery-image-container">
+        {/* Display tag name above the image */}
+        {image.tag_name && <h4 className="tag-name-header">{image.tag_name}</h4>}
         <img
           src={`data:${image.mime_type};base64,${image.image_data}`}
           alt={image.title}
@@ -72,7 +74,7 @@ const GalleryComponent = () => {
           }}
           onError={() => setLoadError(true)}
         />
-       
+
         {loadError && (
           <div className="image-error">
             <span>Failed to load image</span>
@@ -102,40 +104,43 @@ const GalleryComponent = () => {
       <div className="gallery-layout">
         {/* Sidebar */}
         <div className="gallery-sidebar">
-          <div className="sidebar-header">
-            <h2>Name</h2>
-            <p className="pic-count"># of pics</p>
-          </div>
-          
-          <div className="search-container">
-            <input
-              type="text"
-              placeholder="Search"
-              className="search-input"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-          
-          <h2 className="tags-header">Tags</h2>
-          
-          <div className="tags-list">
-            {loading ? (
-              Array(3).fill().map((_, i) => <Skeleton key={i} height={40} className="w-full" />)
-            ) : error ? (
-              <div className="error-message">{error}</div>
-            ) : (
-              galleryData.tags.map(tag => (
-                <div
-                  key={tag.tag_id}
-                  className={`tag-item ${selectedTag === tag.tag_id ? 'tag-selected' : ''}`}
-                  onClick={() => setSelectedTag(tag.tag_id === selectedTag ? null : tag.tag_id)}
-                >
-                  <span>{tag.tag_name}</span>
-                </div>
-              ))
-            )}
-          </div>
+          {galleryData.tags.length > 0 && (
+            <>
+              <div className="sidebar-header">
+                <h2>Name</h2>
+                <p className="pic-count"># of pics</p>
+              </div>
+              <div className="search-container">
+                <input
+                  type="text"
+                  placeholder="Search"
+                  className="search-input"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <h2 className="tags-header">Tags</h2>
+
+              <div className="tags-list">
+                {loading ? (
+                  Array(3).fill().map((_, i) => <Skeleton key={i} height={40} className="w-full" />)
+                ) : error ? (
+                  <div className="error-message">{error}</div>
+                ) : (
+                  galleryData.tags.map(tag => (
+                    <div
+                      key={tag.tag_id}
+                      className={`tag-item ${selectedTag === tag.tag_id ? 'tag-selected' : ''}`}
+                      onClick={() => setSelectedTag(tag.tag_id === selectedTag ? null : tag.tag_id)}
+                    >
+                      <span>{tag.tag_name}</span>
+                    </div>
+                  ))
+                )}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Main Content */}
@@ -144,7 +149,7 @@ const GalleryComponent = () => {
           <h1 className="tag-section-header">
             {selectedTagName}
           </h1>
-          
+
           {/* Images Grid */}
           <div className="images-grid">
             {loading ? (
@@ -161,18 +166,6 @@ const GalleryComponent = () => {
               ))
             )}
           </div>
-          
-          {selectedTag && galleryData.tags.length > 1 && (
-            <>
-              <h2 className="tag-section-header secondary-header">Tag 2</h2>
-              <div className="images-grid">
-                {/* Second tag images would go here */}
-                {Array(6).fill().map((_, i) => (
-                  <div key={i} className="placeholder-image"></div>
-                ))}
-              </div>
-            </>
-          )}
         </div>
       </div>
     </div>

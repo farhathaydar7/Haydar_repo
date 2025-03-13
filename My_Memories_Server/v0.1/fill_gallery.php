@@ -16,7 +16,7 @@ try {
         SELECT t.tag_id, t.tag_name, COUNT(m.image_id) AS count 
         FROM tags t
         LEFT JOIN memory m ON t.tag_id = m.tag_id AND m.owner_id = :owner_id
-        WHERE t.tag_owner = :owner_id
+        WHERE t.tag_owner = :owner_id AND t.tag_name != ''
         GROUP BY t.tag_id, t.tag_name
     ");
     $tag_stmt->bindParam(':owner_id', $owner_id, PDO::PARAM_INT);

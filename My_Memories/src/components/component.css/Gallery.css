@@ -2,11 +2,13 @@
 .gallery-container {
     font-family: Arial, sans-serif;
     color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
   }
   
   .gallery-layout {
     display: flex;
-    height: 100vh;
     background-color: #f0f8ff;
   }
   
@@ -85,9 +87,17 @@
   
   /* Main Content Styles */
   .gallery-content {
-    flex: 1;
+    flex: 3; /* Make gallery-content take up most of the space */
     padding: 20px;
-    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .images-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive grid */
+    gap: 15px;
+    padding: 20px 0;
   }
   
   .tag-section-header {
@@ -100,13 +110,6 @@
   
   .secondary-header {
     margin-top: 30px;
-  }
-  
-  .images-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-    gap: 20px;
-    margin-bottom: 30px;
   }
   
   /* Image Styles */
