@@ -10,19 +10,27 @@ const Upload = () => {
   const [mimeType, setMimeType] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [memoryTitle, setMemoryTitle] = useState('');
-  const [memoryDate, setMemoryDate] = useState('');
+  const [memoryDate, setMemoryDate] = useState(new Date().toISOString().split('T')[0]); // Default to today
   const [tags, setTags] = useState('');
   const [description, setDescription] = useState('');
   const [galleryImages, setGalleryImages] = useState([]);
   const [error, setError] = useState('');
+  const [userId, setUserId] = useState(null);
 
-  // Check if the user is authenticated
+  // Get user ID from localStorage
   useEffect(() => {
-    const token = localStorage.getItem('jwt_token');
-    if (!token) {
-      navigate('/'); // Redirect to login if no token is found
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        if (userData && userData.id) {
+          setUserId(userData.id);
+        }
+      } catch (e) {
+        console.error('Failed to parse user data:', e);
+      }
     }
-  }, [navigate]);
+  }, []);
 
   // Handle file upload logic
   const handleFile = (file) => {
@@ -91,6 +99,12 @@ const Upload = () => {
       return;
     }
 
+    if (!userId) {
+      setError('User ID not available. Please log in again.');
+      navigate('/');
+      return;
+    }
+
     const token = localStorage.getItem('jwt_token');
     if (!token) {
       setError('You must be logged in to upload images.');
@@ -98,21 +112,24 @@ const Upload = () => {
       return;
     }
 
+    setError(''); // Clear any previous errors
+
     const payload = {
       image: base64Image,
       mime_type: mimeType,
-      title: memoryTitle,
-      date: memoryDate,
+      title: memoryTitle || 'Untitled',
+      date: memoryDate || new Date().toISOString().split('T')[0],
       tag: tags,
       description: description,
+      owner_id: userId 
     };
 
     try {
-      const response = await fetch(API_URL + 'v0.1/upload.php', {
+      const response = await fetch(`${API_URL}v0.1/upload.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`, // Include the JWT token
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
@@ -124,21 +141,28 @@ const Upload = () => {
       // eslint-disable-next-line no-unused-vars
       } catch (e) {
         console.error('Invalid JSON:', text);
-        data = { error: `Server returned invalid response: ${text}` };
+        setError(`Server returned invalid response: ${text}`);
+        return;
       }
 
-      if (!response.ok) {
+      if (!response.ok || (data && data.error)) {
         const errorMessage = data.error || data.message || response.statusText;
         console.error('Upload failed:', errorMessage);
         setError(`Error uploading image: ${errorMessage}`);
       } else {
-        alert(`Image uploaded successfully! File path: ${data.filePath}`);
-        setGalleryImages([...galleryImages, payload]);
+        alert('Memory uploaded successfully!');
+        // Add to gallery with the complete image data (including preview URL)
+        setGalleryImages([...galleryImages, {
+          ...payload,
+          image: base64Image,
+          preview: previewUrl
+        }]);
+        // Reset form fields
         setPreviewUrl(null);
         setBase64Image('');
         setMimeType('');
         setMemoryTitle('');
-        setMemoryDate('');
+        setMemoryDate(new Date().toISOString().split('T')[0]);
         setTags('');
         setDescription('');
       }
@@ -204,6 +228,7 @@ const Upload = () => {
             id="memoryTitle"
             value={memoryTitle}
             onChange={(e) => setMemoryTitle(e.target.value)}
+            placeholder="Enter a title for your memory"
           />
 
           <label htmlFor="memoryDate">Memory Date:</label>
@@ -220,6 +245,7 @@ const Upload = () => {
             id="tags"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
+            placeholder="Enter tags separated by commas"
           />
 
           <label htmlFor="description">Description:</label>
@@ -227,37 +253,61 @@ const Upload = () => {
             id="description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            placeholder="Add a description for your memory"
+            rows="4"
           />
         </div>
 
-        <button onClick={onSubmit}>Upload Memory</button>
+        <button 
+          onClick={onSubmit}
+          disabled={!base64Image || !userId}
+          className="upload-button"
+        >
+          Upload Memory
+        </button>
 
         {error && <p className="error-message">{error}</p>}
 
-        <h2>Gallery</h2>
+        <h2>Recently Uploaded</h2>
         <div className="gallery-grid">
-          {galleryImages.map((image, index) => (
-            <div key={index} className="group">
-              <img
-                src={`data:${image.mime_type};base64,${image.image}`}
-                alt={image.title}
-                className="w-full h-auto rounded-lg shadow-sm"
-              />
-              <div className="overlay">
-                <div className="overlay-content">
-                  <h3>{image.title ?? "Untitled"}</h3>
-                  <p>{image.description ?? "No description"}</p>
-                  <time>
-                    {image.date ? new Date(image.date).toLocaleDateString() : "Unknown Date"}
-                  </time>
+          {galleryImages.length === 0 ? (
+            <p className="no-images">Your uploaded memories will appear here</p>
+          ) : (
+            galleryImages.map((image, index) => (
+              <div key={index} className="gallery-item">
+                <img
+                  src={image.preview || `data:${image.mime_type};base64,${image.image}`}
+                  alt={image.title}
+                  className="gallery-image"
+                />
+                <div className="overlay">
+                  <div className="overlay-content">
+                    <h3>{image.title || "Untitled"}</h3>
+                    <p>{image.description || "No description"}</p>
+                    <time>
+                      {image.date ? new Date(image.date).toLocaleDateString() : "Unknown Date"}
+                    </time>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
     </div>
   );
 };
 
-export default Upload;
+// Export wrapped with Auth component
+export default function ProtectedUpload() {
+  // Import Auth at the top level to ensure proper loading
+  const Auth = React.lazy(() => import('./Auth'));
+  
+  return (
+    <React.Suspense fallback={<div>Loading...</div>}>
+      <Auth>
+        <Upload />
+      </Auth>
+    </React.Suspense>
+  );
+}
