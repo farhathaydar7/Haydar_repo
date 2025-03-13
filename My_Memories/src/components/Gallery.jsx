@@ -1,12 +1,15 @@
-import React, { useState, useEffect } from 'react';
-import API_URL from '../assets/links.jsx';
-import './component.css/Gallery.css';
+import React, { useState, useEffect } from "react";
+import API_URL from "../assets/links.jsx";
+import "./component.css/Gallery.css";
 const Skeleton = ({ height, className }) => (
-  <div className={`bg-gray-200 animate-pulse rounded-lg ${className}`} style={{ height }} />
+  <div
+    className={`bg-gray-200 animate-pulse rounded-lg ${className}`}
+    style={{ height }}
+  />
 );
 
 const GalleryComponent = () => {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState(null);
   const [galleryData, setGalleryData] = useState({ tags: [], images: [] });
   const [loading, setLoading] = useState(true);
@@ -16,33 +19,36 @@ const GalleryComponent = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('jwt_token');
-        const user = localStorage.getItem('user');
+        const token = localStorage.getItem("jwt_token");
+        const user = localStorage.getItem("user");
         let owner_id = null;
         if (user) {
           try {
             const userData = JSON.parse(user);
             owner_id = userData.id;
           } catch (e) {
-            console.error('Failed to parse user data:', e);
+            console.error("Failed to parse user data:", e);
           }
         }
         const params = new URLSearchParams({
           owner_id: owner_id,
           search: searchQuery,
-          tag: selectedTag || '',
+          tag: selectedTag || "",
         });
 
-        const response = await fetch(`${API_URL}v0.1/fill_gallery.php?${params}`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
+        const response = await fetch(
+          `${API_URL}v0.1/fill_gallery.php?${params}`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+          }
+        );
 
-        if (!response.ok) throw new Error('Failed to fetch data');
+        if (!response.ok) throw new Error("Failed to fetch data");
         const data = await response.json();
 
         setGalleryData({
           tags: data.tags,
-          images: data.images.filter(img => img.image_data),
+          images: data.images.filter((img) => img.image_data),
         });
       } catch (err) {
         setError(err.message);
@@ -62,7 +68,9 @@ const GalleryComponent = () => {
     return (
       <div className="gallery-image-container">
         {/* Display tag name above the image */}
-        {image.tag_name && <h4 className="tag-name-header">{image.tag_name}</h4>}
+        {image.tag_name && (
+          <h4 className="tag-name-header">{image.tag_name}</h4>
+        )}
         <img
           src={`data:${image.mime_type};base64,${image.image_data}`}
           alt={image.title}
@@ -85,7 +93,9 @@ const GalleryComponent = () => {
             <h3>{image.title ?? "Untitled"}</h3>
             <p>{image.description ?? "No description"}</p>
             <time>
-              {image.date ? new Date(image.date).toLocaleDateString() : "Unknown Date"}
+              {image.date
+                ? new Date(image.date).toLocaleDateString()
+                : "Unknown Date"}
             </time>
           </div>
         </div>
@@ -94,8 +104,8 @@ const GalleryComponent = () => {
   };
 
   const selectedTagName = selectedTag
-    ? galleryData.tags.find(t => t.tag_id === selectedTag)?.tag_name
-    : 'All Photos';
+    ? galleryData.tags.find((t) => t.tag_id === selectedTag)?.tag_name
+    : "All Photos";
 
   return (
     <div className="gallery-container">
@@ -122,15 +132,25 @@ const GalleryComponent = () => {
             <h2 className="tags-header">Tags</h2>
             <div className="tags-list">
               {loading ? (
-                Array(3).fill().map((_, i) => <Skeleton key={i} height={40} className="w-full" />)
+                Array(3)
+                  .fill()
+                  .map((_, i) => (
+                    <Skeleton key={i} height={40} className="w-full" />
+                  ))
               ) : error ? (
                 <div className="error-message">{error}</div>
               ) : (
-                galleryData.tags.map(tag => (
+                galleryData.tags.map((tag) => (
                   <div
                     key={tag.tag_id}
-                    className={`tag-item ${selectedTag === tag.tag_id ? 'tag-selected' : ''}`}
-                    onClick={() => setSelectedTag(tag.tag_id === selectedTag ? null : tag.tag_id)}
+                    className={`tag-item ${
+                      selectedTag === tag.tag_id ? "tag-selected" : ""
+                    }`}
+                    onClick={() =>
+                      setSelectedTag(
+                        tag.tag_id === selectedTag ? null : tag.tag_id
+                      )
+                    }
                   >
                     <span>{tag.tag_name}</span>
                   </div>
@@ -144,23 +164,23 @@ const GalleryComponent = () => {
         <div className="gallery-content">
           {/* Tag Section Headers */}
           {(galleryData.tags.length > 0 || galleryData.images.length > 0) && (
-            <h1 className="tag-section-header">
-              {selectedTagName}
-            </h1>
+            <h1 className="tag-section-header">{selectedTagName}</h1>
           )}
 
           {/* Images Grid */}
           <div className="images-grid">
             {loading ? (
-              Array(12).fill().map((_, i) => <Skeleton key={i} className="image-skeleton" />)
+              Array(12)
+                .fill()
+                .map((_, i) => <Skeleton key={i} className="image-skeleton" />)
             ) : error ? (
               <div className="centered-message error-message">{error}</div>
             ) : galleryData.images.length === 0 ? (
               <div className="centered-message">
-                No photos found {searchQuery ? `for "{searchQuery}"` : ''}
+                No photos found for your search.
               </div>
             ) : (
-              galleryData.images.map(image => (
+              galleryData.images.map((image) => (
                 <GalleryImage key={image.image_id} image={image} />
               ))
             )}
