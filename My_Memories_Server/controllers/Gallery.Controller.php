@@ -1,7 +1,7 @@
 <?php
 // backend/controllers/GalleryController.php
 
-require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config.php';
 require_once __DIR__ . '/../models/UserModel.php';
 require_once __DIR__ . '/../models/PhotoModel.php';
 require_once __DIR__ . '/../models/TagModel.php';

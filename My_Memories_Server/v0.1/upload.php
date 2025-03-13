@@ -65,7 +65,37 @@ try {
             throw new Exception('Invalid or expired token: ' . $e->getMessage(), 401);
         }
     }
-    
+
+    // Example server-side validation:
+    // Extract user ID from JWT token
+    function getUserIdFromToken($jwt) {
+        global $jwt_secret;
+        try {
+            $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
+            // Extract the user ID from the decoded token
+            if (isset($decoded->user_id)) {
+                return $decoded->user_id;
+            } else if (isset($decoded->id)) {
+                return $decoded->id;
+            } else if (isset($decoded->sub)) {
+                return $decoded->sub;
+            } else {
+                throw new Exception('User ID not found in token', 401);
+            }
+        } catch (Exception $e) {
+            throw new Exception('Invalid or expired token: ' . $e->getMessage(), 401);
+        }
+    }
+    $tokenUserId = getUserIdFromToken($jwt);
+
+    // Get user ID from request payload
+    $payloadUserId = $data->owner_id;
+
+    // Check if they match
+    if ($tokenUserId != $payloadUserId) {
+        throw new Exception('User ID mismatch', 403);
+    }
+
     if (!$owner_id) {
         throw new Exception('User ID not available', 401);
     }

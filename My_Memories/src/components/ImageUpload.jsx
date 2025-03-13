@@ -247,7 +247,7 @@ const Upload = () => {
             id="tags"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
-            placeholder="Enter tags separated by commas"
+            placeholder="Enter tag"
           />
 
           <label htmlFor="description">Description:</label>
