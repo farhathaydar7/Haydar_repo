@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import API_URL from '../assets/links';
-import './component.css/Gallery.css';
+import './component.css/Upload.css';
 
 const Upload = () => {
   const navigate = useNavigate();
@@ -20,7 +20,7 @@ const Upload = () => {
   useEffect(() => {
     const token = localStorage.getItem('jwt_token');
     if (!token) {
-      navigate('/login'); // Redirect to login if no token is found
+      navigate('/'); // Redirect to login if no token is found
     }
   }, [navigate]);
 
@@ -94,7 +94,7 @@ const Upload = () => {
     const token = localStorage.getItem('jwt_token');
     if (!token) {
       setError('You must be logged in to upload images.');
-      navigate('/login');
+      navigate('/');
       return;
     }
 

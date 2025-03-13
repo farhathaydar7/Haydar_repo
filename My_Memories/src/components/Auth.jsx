@@ -1,6 +1,7 @@
+/* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {jwtDecode }from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 const Auth = ({ children }) => {
   const navigate = useNavigate();
@@ -9,25 +10,22 @@ const Auth = ({ children }) => {
   useEffect(() => {
     const token = localStorage.getItem('jwt_token');
     if (!token) {
-      navigate('/');
+      navigate('/'); // Redirect to login
       return;
     }
 
     try {
       const decodedToken = jwtDecode(token);
-      const currentTime = Date.now() / 1000; // Convert to seconds
+      const currentTime = Date.now() / 1000;
       if (decodedToken.exp < currentTime) {
-        // Token is expired
         localStorage.removeItem('jwt_token');
-        navigate('/');
+        navigate('/'); // Redirect to login
       } else {
-        setIsLoading(false); // User is authenticated
+        setIsLoading(false);
       }
     } catch (error) {
-      console.error('Invalid token:', error);
       localStorage.removeItem('jwt_token');
-      console.log('Please Log in');
-      navigate('/');
+      navigate('/'); // Redirect to login
     }
   }, [navigate]);
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import API_URL from '../assets/links.jsx';
-
+import './component.css/Gallery.css';
 const Skeleton = ({ height, className }) => (
   <div className={`bg-gray-200 animate-pulse rounded-lg ${className}`} style={{ height }} />
 );
@@ -16,7 +16,7 @@ const GalleryComponent = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem('token');
+        const token = localStorage.getItem('jwt_token');
         const params = new URLSearchParams({
           owner_id: 1,
           search: searchQuery,
@@ -45,74 +45,123 @@ const GalleryComponent = () => {
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, selectedTag]);
 
-  return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <div className="w-64 bg-white border-r border-gray-200 p-4 overflow-y-auto">
-        <h2 className="text-lg font-semibold mb-4">Tags</h2>
-        <div className="space-y-2">
-          {loading ? (
-            Array(3).fill().map((_, i) => <Skeleton key={i} height={40} className="w-full" />)
-          ) : error ? (
-            <div className="text-red-500">{error}</div>
-          ) : (
-            galleryData.tags.map(tag => (
-              <div
-                key={tag.tag_id}
-                className={`flex justify-between items-center p-2 rounded cursor-pointer ${
-                  selectedTag === tag.tag_id ? 'bg-blue-50 text-blue-600' : 'hover:bg-gray-100'
-                }`}
-                onClick={() => setSelectedTag(tag.tag_id === selectedTag ? null : tag.tag_id)}
-              >
-                <span className="truncate">{tag.tag_name}</span>
-                <span className="text-sm text-gray-500">{tag.count}</span>
-              </div>
-            ))
-          )}
+  const GalleryImage = ({ image }) => {
+    const [loadError, setLoadError] = useState(false);
+    if (!image.image_data || !image.mime_type) return null;
+    
+    return (
+      <div className="gallery-image-container">
+        <img
+          src={`data:${image.mime_type};base64,${image.image_data}`}
+          alt={image.title}
+          className="gallery-image"
+          onLoad={(e) => {
+            if (e.target.naturalWidth === 0) {
+              setLoadError(true);
+            }
+          }}
+          onError={() => setLoadError(true)}
+        />
+       
+        {loadError && (
+          <div className="image-error">
+            <span>Failed to load image</span>
+          </div>
+        )}
+        <div className="image-overlay">
+          <div className="image-info">
+            <h3>{image.title ?? "Untitled"}</h3>
+            <p>{image.description ?? "No description"}</p>
+            <time>
+              {image.date ? new Date(image.date).toLocaleDateString() : "Unknown Date"}
+            </time>
+          </div>
         </div>
       </div>
+    );
+  };
 
-      {/* Main Content */}
-      <div className="flex-1 p-8 overflow-y-auto">
-        <div className="mb-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-            <h1 className="text-2xl font-bold truncate">
-              {selectedTag 
-                ? galleryData.tags.find(t => t.tag_id === selectedTag)?.tag_name 
-                : 'All Photos'}
-            </h1>
-            <div className="w-full md:w-64">
-              <input
-                type="text"
-                placeholder="Search memories..."
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
+  const selectedTagName = selectedTag
+    ? galleryData.tags.find(t => t.tag_id === selectedTag)?.tag_name
+    : 'All Photos';
+
+  return (
+    <div className="gallery-container">
+      {loading && <p className="loading-message">Loading...</p>}
+      {error && <p className="error-message">{error}</p>}
+      <div className="gallery-layout">
+        {/* Sidebar */}
+        <div className="gallery-sidebar">
+          <div className="sidebar-header">
+            <h2>Name</h2>
+            <p className="pic-count"># of pics</p>
+          </div>
+          
+          <div className="search-container">
+            <input
+              type="text"
+              placeholder="Search"
+              className="search-input"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          
+          <h2 className="tags-header">Tags</h2>
+          
+          <div className="tags-list">
+            {loading ? (
+              Array(3).fill().map((_, i) => <Skeleton key={i} height={40} className="w-full" />)
+            ) : error ? (
+              <div className="error-message">{error}</div>
+            ) : (
+              galleryData.tags.map(tag => (
+                <div
+                  key={tag.tag_id}
+                  className={`tag-item ${selectedTag === tag.tag_id ? 'tag-selected' : ''}`}
+                  onClick={() => setSelectedTag(tag.tag_id === selectedTag ? null : tag.tag_id)}
+                >
+                  <span>{tag.tag_name}</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
 
-        <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
-          {loading ? (
-            Array(12).fill().map((_, i) => <Skeleton key={i} className="aspect-square mb-4" />)
-          ) : error ? (
-            <div className="text-center py-8 text-red-500">{error}</div>
-          ) : galleryData.images.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              No photos found {searchQuery ? `for "${searchQuery}"` : ''}
-            </div>
-          ) : (
-            galleryData.images.map(image => (
-              <div key={image.image_id} className="mb-4 break-inside-avoid relative group">
-                <img
-                  src={`data:${image.mime_type};base64,${image.image_data}`}
-                  alt={image.title}
-                  className="w-full h-auto rounded-lg shadow-sm"
-                  onError={(e) => (e.target.style.display = 'none')}
-                />
+        {/* Main Content */}
+        <div className="gallery-content">
+          {/* Tag Section Headers */}
+          <h1 className="tag-section-header">
+            {selectedTagName}
+          </h1>
+          
+          {/* Images Grid */}
+          <div className="images-grid">
+            {loading ? (
+              Array(12).fill().map((_, i) => <Skeleton key={i} className="image-skeleton" />)
+            ) : error ? (
+              <div className="centered-message error-message">{error}</div>
+            ) : galleryData.images.length === 0 ? (
+              <div className="centered-message">
+                No photos found {searchQuery ? `for "${searchQuery}"` : ''}
               </div>
-            ))
+            ) : (
+              galleryData.images.map(image => (
+                <GalleryImage key={image.image_id} image={image} />
+              ))
+            )}
+          </div>
+          
+          {selectedTag && galleryData.tags.length > 1 && (
+            <>
+              <h2 className="tag-section-header secondary-header">Tag 2</h2>
+              <div className="images-grid">
+                {/* Second tag images would go here */}
+                {Array(6).fill().map((_, i) => (
+                  <div key={i} className="placeholder-image"></div>
+                ))}
+              </div>
+            </>
           )}
         </div>
       </div>
