@@ -6,91 +6,94 @@ header("Access-Control-Allow-Headers: Content-Type");
 
 require_once __DIR__.'/../config.php';
 
-// Supported MIME types
-$mimeTypes = [
-    'jpg'  => 'image/jpeg',
-    'jpeg' => 'image/jpeg',
-    'png'  => 'image/png',
-    'gif'  => 'image/gif',
-    'webp' => 'image/webp',
-    'bmp'  => 'image/bmp',
-    'svg'  => 'image/svg+xml'
-];
-
 try {
-    $owner_id = $_GET['owner_id'] ?? 1; // Replace with actual auth logic
-    $selected_tag = $_GET['tag'] ?? null;
-    $search_query = $_GET['search'] ?? null;
+    $owner_id = isset($_GET['owner_id']) ? intval($_GET['owner_id']) : 1;
+    $selected_tag = isset($_GET['tag']) ? intval($_GET['tag']) : null;
+    $search_query = isset($_GET['search']) ? trim($_GET['search']) : null;
 
     // Fetch tags
     $tag_stmt = $db->prepare("
         SELECT t.tag_id, t.tag_name, COUNT(m.image_id) AS count 
         FROM tags t
-        LEFT JOIN memory m ON t.tag_id = m.tag_id
+        LEFT JOIN memory m ON t.tag_id = m.tag_id AND m.owner_id = :owner_id
         WHERE t.tag_owner = :owner_id
-        GROUP BY t.tag_id
+        GROUP BY t.tag_id, t.tag_name
     ");
-    $tag_stmt->bindParam(':owner_id', $owner_id);
+    $tag_stmt->bindParam(':owner_id', $owner_id, PDO::PARAM_INT);
     $tag_stmt->execute();
     $tags = $tag_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Fetch images
+    // Fetch images with dynamic query
     $image_sql = "SELECT * FROM memory WHERE owner_id = :owner_id";
-    if ($selected_tag) $image_sql .= " AND tag_id = :tag_id";
-    if ($search_query) $image_sql .= " AND (title LIKE :search OR description LIKE :search)";
-    
+    $params = [':owner_id' => $owner_id];
+
+    if ($selected_tag) {
+        $image_sql .= " AND tag_id = :tag_id";
+        $params[':tag_id'] = $selected_tag;
+    }
+    if ($search_query) {
+        $image_sql .= " AND (title LIKE :search OR description LIKE :search)";
+        $params[':search'] = "%$search_query%";
+    }
+
     $image_stmt = $db->prepare($image_sql);
-    $image_stmt->bindParam(':owner_id', $owner_id);
-    if ($selected_tag) $image_stmt->bindParam(':tag_id', $selected_tag);
-    if ($search_query) $image_stmt->bindValue(':search', "%$search_query%");
-    
+    foreach ($params as $key => $value) {
+        $image_stmt->bindValue($key, $value);
+    }
+
     $image_stmt->execute();
     $images = $image_stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Convert image URLs to base64
-    // Inside the image conversion loop
     foreach ($images as &$image) {
-        $filePath = realpath(__DIR__.'/../'.$image['image_url']);
-        
-        if (!$filePath) {
-            error_log("File not found: " . __DIR__.'/../'.$image['image_url']);
+        $relativePath = $image['image_url'];
+        $filePath = realpath(__DIR__ . '/../' . $relativePath);
+
+        if (!$filePath || !file_exists($filePath)) {
+            error_log("Missing image file: {$relativePath} (Resolved path: " . __DIR__ . '/../' . $relativePath . ")");
             $image['image_data'] = null;
+            $image['mime_type'] = null;
             continue;
         }
 
-        if (!file_exists($filePath)) {
-            error_log("File does not exist: $filePath");
+        // Get actual MIME type
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $mime_type = finfo_file($finfo, $filePath);
+        finfo_close($finfo);
+
+        // Validate image type
+        $allowed_types = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/svg+xml'];
+        if (!in_array($mime_type, $allowed_types)) {
+            error_log("Invalid image type: $mime_type for file: {$image['image_url']}");
             $image['image_data'] = null;
+            $image['mime_type'] = null;
             continue;
         }
 
-        $fileContent = file_get_contents($filePath);
-        if ($fileContent === false) {
-            error_log("Failed to read file: $filePath");
-            $image['image_data'] = null;
-            continue;
+        // Read and encode image
+        $image_data = file_get_contents($filePath);
+        $base64 = base64_encode($image_data);
+
+        // Ensure proper base64 padding
+        if (strlen($base64) % 4 !== 0) {
+            $base64 .= str_repeat('=', 4 - (strlen($base64) % 4));
         }
 
-        $extension = strtolower(pathinfo($filePath, PATHINFO_EXTENSION));
-        $image['image_data'] = base64_encode($fileContent);
-        $image['mime_type'] = $mimeTypes[$extension] ?? 'application/octet-stream';
+        $image['image_data'] = $base64;
+        $image['mime_type'] = $mime_type;
     }
-    unset($image['image_url']); // Remove original URL from response
 
-    $response = [
+    echo json_encode([
         'tags' => $tags,
         'images' => $images,
         'selected_tag' => $selected_tag,
         'search_query' => $search_query
-    ];
+    ]);
 
-    header('Content-Length: ' . strlen(json_encode($response)));
-    echo json_encode($response);
-
-} catch(PDOException $e) {
+} catch (PDOException $e) {
     http_response_code(500);
     echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
-} catch(Exception $e) {
+} catch (Exception $e) {
     http_response_code(400);
     echo json_encode(['error' => $e->getMessage()]);
 }

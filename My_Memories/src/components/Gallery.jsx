@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import API_URL from '../assets/links.jsx';
+import GalleryImage from './GalleryImage';
 
 const Skeleton = ({ height, className }) => (
-  <div
-    className={`bg-gray-200 animate-pulse rounded-lg ${className}`}
-    style={{ height }}
-  />
+  <div className={`bg-gray-200 animate-pulse rounded-lg ${className}`} style={{ height }} />
 );
 
 const GalleryComponent = () => {
@@ -21,23 +19,22 @@ const GalleryComponent = () => {
         setLoading(true);
         const token = localStorage.getItem('token');
         const params = new URLSearchParams({
-          owner_id: 1, // Replace with actual owner ID
+          owner_id: 1,
           search: searchQuery,
           tag: selectedTag || '',
         });
 
         const response = await fetch(`${API_URL}v0.1/fill_gallery.php?${params}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 'Authorization': `Bearer ${token}` },
         });
 
         if (!response.ok) throw new Error('Failed to fetch data');
         const data = await response.json();
-        
+
         setGalleryData({
           tags: data.tags,
-          images: data.images.filter(img => img.image_data) // Filter out invalid images
+          images: data.images.filter(img => img.image_data),
         });
-        
       } catch (err) {
         setError(err.message);
       } finally {
@@ -56,9 +53,7 @@ const GalleryComponent = () => {
         <h2 className="text-lg font-semibold mb-4">Tags</h2>
         <div className="space-y-2">
           {loading ? (
-            Array(3).fill().map((_, i) => (
-              <Skeleton key={i} height={40} className="w-full" />
-            ))
+            Array(3).fill().map((_, i) => <Skeleton key={i} height={40} className="w-full" />)
           ) : error ? (
             <div className="text-red-500">{error}</div>
           ) : (
@@ -101,9 +96,7 @@ const GalleryComponent = () => {
 
         <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
           {loading ? (
-            Array(12).fill().map((_, i) => (
-              <Skeleton key={i} className="aspect-square mb-4" />
-            ))
+            Array(12).fill().map((_, i) => <Skeleton key={i} className="aspect-square mb-4" />)
           ) : error ? (
             <div className="text-center py-8 text-red-500">{error}</div>
           ) : galleryData.images.length === 0 ? (
@@ -111,34 +104,14 @@ const GalleryComponent = () => {
               No photos found {searchQuery ? `for "${searchQuery}"` : ''}
             </div>
           ) : (
-            galleryData.images.map((image) => (
-              <div 
-                key={image.image_id}
-                className="mb-4 break-inside-avoid relative group"
-              >
+            galleryData.images.map(image => (
+              <div key={image.image_id} className="mb-4 break-inside-avoid relative group">
                 <img
                   src={`data:${image.mime_type};base64,${image.image_data}`}
                   alt={image.title}
-                  className="w-full h-auto rounded-lg shadow-sm transition-transform duration-200 hover:scale-105"
-                  loading="lazy"
-                  onError={(e) => {
-                    console.error('Invalid image data for:', image.image_id);
-                    e.target.style.display = 'none';
-                  }}
-                  onLoad={(e) => {
-                    console.log('Loaded image dimensions:',
-                      e.target.naturalWidth, 'x', e.target.naturalHeight);
-                  }}
+                  className="w-full h-auto rounded-lg shadow-sm"
+                  onError={(e) => (e.target.style.display = 'none')}
                 />
-                <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-200 rounded-lg flex items-end p-4 opacity-0 group-hover:opacity-100">
-                  <div className="text-white">
-                    <h3 className="font-semibold truncate">{image.title}</h3>
-                    <p className="text-sm truncate">{image.description}</p>
-                    <time className="text-xs opacity-75">
-                      {new Date(image.date).toLocaleDateString()}
-                    </time>
-                  </div>
-                </div>
               </div>
             ))
           )}
