@@ -17,8 +17,18 @@ const GalleryComponent = () => {
       try {
         setLoading(true);
         const token = localStorage.getItem('jwt_token');
+        const user = localStorage.getItem('user');
+        let owner_id = null;
+        if (user) {
+          try {
+            const userData = JSON.parse(user);
+            owner_id = userData.id;
+          } catch (e) {
+            console.error('Failed to parse user data:', e);
+          }
+        }
         const params = new URLSearchParams({
-          owner_id: 1,
+          owner_id: owner_id,
           search: searchQuery,
           tag: selectedTag || '',
         });
