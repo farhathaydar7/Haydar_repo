@@ -4,12 +4,14 @@ ini_set('display_errors', 1);
 
 require_once __DIR__.'/../config.php';
 require_once __DIR__.'/../models/Photo.Model.php';
-$photoModel = new PhotoModel();
+require_once __DIR__.'/../vendor/autoload.php'; // Include JWT library
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
@@ -21,6 +23,26 @@ try {
         throw new Exception('Method not allowed', 405);
     }
 
+    // Check for JWT token in the Authorization header
+    $headers = getallheaders();
+    if (!isset($headers['Authorization'])) {
+        throw new Exception('Authorization header not found', 401);
+    }
+
+    $authHeader = $headers['Authorization'];
+    list($jwt) = sscanf($authHeader, 'Bearer %s');
+    if (!$jwt) {
+        throw new Exception('Token not provided', 401);
+    }
+
+    // Decode the JWT token
+    global $jwt_secret; // Ensure this is defined in your config.php
+    $decoded = JWT::decode($jwt, new Key($jwt_secret, 'HS256'));
+
+    // Extract the user ID from the decoded token
+    $owner_id = $decoded->user_id; // Assuming the token contains a `user_id` field
+
+    // Process the request body
     $request_body = file_get_contents('php://input');
     $data = json_decode($request_body, true);
 
@@ -47,7 +69,6 @@ try {
     }
 
     // Retrieve additional data from the JSON payload
-    $owner_id = 1; // Replace with actual user ID if authentication is implemented
     $title = $data['title'] ?? 'Untitled';
     $date = $data['date'] ?? date('Y-m-d');
     $description = $data['description'] ?? '';
@@ -62,6 +83,7 @@ try {
     }
 
     // Create memory entry
+    $photoModel = new PhotoModel();
     $memoryCreated = $photoModel->create(
         $owner_id,
         $title,

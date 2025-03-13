@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import API_URL from '../assets/links.jsx';
-import GalleryImage from './GalleryImage';
 
 const Skeleton = ({ height, className }) => (
   <div className={`bg-gray-200 animate-pulse rounded-lg ${className}`} style={{ height }} />

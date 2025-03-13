@@ -1,0 +1,172 @@
+/* GalleryComponent.css */
+.gallery-container {
+    display: flex;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    gap: 20px;
+  }
+  
+  .upload-section {
+    flex: 1;
+    padding: 20px;
+    border-right: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .gallery-section {
+    flex: 1;
+    padding: 20px;
+  }
+  
+  .drag-drop-area {
+    border: 2px dashed #ccc;
+    padding: 20px;
+    text-align: center;
+    margin-bottom: 20px;
+    transition: border-color 0.3s ease;
+    flex: 1; /* Make the drag-drop area grow to fill the available space */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Center content vertically */
+    position: relative; /* For positioning the remove button */
+  }
+  
+  .drag-drop-area.dragging {
+    border-color: #000;
+  }
+  
+  .drag-drop-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px; /* Add spacing between elements */
+    flex: 1; /* Make the content grow to fill the drag-drop area */
+    justify-content: center; /* Center content vertically */
+  }
+  
+  .upload-btn {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+  }
+  
+  .upload-btn:hover {
+    background-color: #0056b3;
+  }
+  
+  .image-preview {
+    position: absolute; /* Make the image take the full background */
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 255, 255, 0.9); /* Slightly opaque background */
+  }
+  
+  .image-preview img {
+    max-width: 100%;
+    max-height: 100%;
+    border-radius: 5px;
+  }
+  
+  .remove-btn {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: none;
+    border: none;
+    color: red;
+    font-size: 24px;
+    cursor: pointer;
+    z-index: 10; /* Ensure the button is above the image */
+  }
+  
+  .remove-btn:hover {
+    color: darkred;
+  }
+  
+  .form-inputs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .form-inputs label {
+    font-weight: bold;
+  }
+  
+  .form-inputs input,
+  .form-inputs textarea {
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+  
+  .gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+  }
+  
+  .gallery-grid img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .gallery-grid .group {
+    position: relative;
+  }
+  
+  .gallery-grid .group:hover .overlay {
+    opacity: 1;
+  }
+  
+  .overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: flex-end;
+    padding: 16px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: 8px;
+  }
+  
+  .overlay-content {
+    color: white;
+  }
+  
+  .overlay-content h3,
+  .overlay-content p,
+  .overlay-content time {
+    margin: 0;
+  }
+  
+  .overlay-content h3 {
+    font-size: 18px;
+    font-weight: bold;
+  }
+  
+  .overlay-content p {
+    font-size: 14px;
+  }
+  
+  .overlay-content time {
+    font-size: 12px;
+    opacity: 0.75;
+  }
