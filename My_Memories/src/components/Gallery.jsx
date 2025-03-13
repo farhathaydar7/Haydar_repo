@@ -103,52 +103,51 @@ const GalleryComponent = () => {
       {error && <p className="error-message">{error}</p>}
       <div className="gallery-layout">
         {/* Sidebar */}
-        <div className="gallery-sidebar">
-          {galleryData.tags.length > 0 && (
-            <>
-              <div className="sidebar-header">
-                <h2>Name</h2>
-                <p className="pic-count"># of pics</p>
-              </div>
-              <div className="search-container">
-                <input
-                  type="text"
-                  placeholder="Search"
-                  className="search-input"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
+        {galleryData.tags && galleryData.tags.length > 0 && (
+          <div className="gallery-sidebar">
+            <div className="sidebar-header">
+              <h2>Name</h2>
+              <p className="pic-count"># of pics</p>
+            </div>
+            <div className="search-container">
+              <input
+                type="text"
+                placeholder="Search"
+                className="search-input"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
 
-              <h2 className="tags-header">Tags</h2>
-
-              <div className="tags-list">
-                {loading ? (
-                  Array(3).fill().map((_, i) => <Skeleton key={i} height={40} className="w-full" />)
-                ) : error ? (
-                  <div className="error-message">{error}</div>
-                ) : (
-                  galleryData.tags.map(tag => (
-                    <div
-                      key={tag.tag_id}
-                      className={`tag-item ${selectedTag === tag.tag_id ? 'tag-selected' : ''}`}
-                      onClick={() => setSelectedTag(tag.tag_id === selectedTag ? null : tag.tag_id)}
-                    >
-                      <span>{tag.tag_name}</span>
-                    </div>
-                  ))
-                )}
-              </div>
-            </>
-          )}
-        </div>
+            <h2 className="tags-header">Tags</h2>
+            <div className="tags-list">
+              {loading ? (
+                Array(3).fill().map((_, i) => <Skeleton key={i} height={40} className="w-full" />)
+              ) : error ? (
+                <div className="error-message">{error}</div>
+              ) : (
+                galleryData.tags.map(tag => (
+                  <div
+                    key={tag.tag_id}
+                    className={`tag-item ${selectedTag === tag.tag_id ? 'tag-selected' : ''}`}
+                    onClick={() => setSelectedTag(tag.tag_id === selectedTag ? null : tag.tag_id)}
+                  >
+                    <span>{tag.tag_name}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Main Content */}
         <div className="gallery-content">
           {/* Tag Section Headers */}
-          <h1 className="tag-section-header">
-            {selectedTagName}
-          </h1>
+          {(galleryData.tags.length > 0 || galleryData.images.length > 0) && (
+            <h1 className="tag-section-header">
+              {selectedTagName}
+            </h1>
+          )}
 
           {/* Images Grid */}
           <div className="images-grid">
@@ -158,7 +157,7 @@ const GalleryComponent = () => {
               <div className="centered-message error-message">{error}</div>
             ) : galleryData.images.length === 0 ? (
               <div className="centered-message">
-                No photos found {searchQuery ? `for "${searchQuery}"` : ''}
+                No photos found {searchQuery ? `for "{searchQuery}"` : ''}
               </div>
             ) : (
               galleryData.images.map(image => (

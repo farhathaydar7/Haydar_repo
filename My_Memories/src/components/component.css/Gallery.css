@@ -6,45 +6,47 @@
     flex-direction: column;
     min-height: 100vh;
   }
-  
-  .gallery-layout {
-    display: flex;
-    background-color: #f0f8ff;
-  }
-  
+
+   .gallery-layout {
+     display: flex;
+     background-color: #f0f8ff;
+     min-height: 100%; /* Ensure gallery-layout fills gallery-container */
+     overflow-y: auto; /* Allow vertical scroll when needed */
+   }
+
   /* Sidebar Styles */
   .gallery-sidebar {
     width: 180px;
     background-color: #e6f2ff;
     border-right: 1px solid #ddd;
     padding: 0;
-    overflow-y: auto;
+    overflow-y: auto; /* Keep scroll for sidebar if needed */
   }
-  
+
   .sidebar-header {
     background-color: #e6f2ff;
     padding: 15px;
     margin: 0;
   }
-  
+
   .sidebar-header h2 {
     margin: 0;
     font-size: 20px;
     font-weight: bold;
   }
-  
+
   .pic-count {
     margin: 5px 0 0;
     font-size: 14px;
     color: #555;
   }
-  
+
   .search-container {
     padding: 10px;
     background-color: #f5f5dc;
     margin-bottom: 10px;
   }
-  
+
   .search-input {
     width: 100%;
     padding: 5px;
@@ -53,7 +55,7 @@
     outline: none;
     font-size: 14px;
   }
-  
+
   .tags-header {
     padding: 15px;
     margin: 0;
@@ -61,11 +63,11 @@
     font-weight: bold;
     background-color: #e6f2ff;
   }
-  
+
   .tags-list {
     padding: 0;
   }
-  
+
   .tag-item {
     padding: 12px 15px;
     cursor: pointer;
@@ -75,31 +77,33 @@
     font-size: 14px;
     transition: background-color 0.2s;
   }
-  
+
   .tag-item:hover {
     background-color: #f0e8c0;
   }
-  
+
   .tag-selected {
     background-color: #f0e8c0;
     font-weight: bold;
   }
-  
+
   /* Main Content Styles */
   .gallery-content {
     flex: 3; /* Make gallery-content take up most of the space */
     padding: 20px;
     display: flex;
     flex-direction: column;
+    min-height: 100%; /* Ensure gallery-content fills gallery-layout */
+    overflow-y: auto; /* Allow vertical scroll when needed */
   }
-  
+
   .images-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); /* Responsive grid */
     gap: 15px;
     padding: 20px 0;
   }
-  
+
   .tag-section-header {
     color: #999;
     font-size: 24px;
@@ -107,11 +111,11 @@
     margin-bottom: 20px;
     font-weight: normal;
   }
-  
+
   .secondary-header {
     margin-top: 30px;
   }
-  
+
   /* Image Styles */
   .gallery-image-container {
     position: relative;
@@ -120,20 +124,20 @@
     background-color: #ddd;
     aspect-ratio: 1;
   }
-  
+
   .gallery-image {
     width: 100%;
     height: 100%;
     object-fit: cover;
   }
-  
+
   .placeholder-image {
     background-color: #ddd;
     width: 100%;
     aspect-ratio: 1;
     border-radius: 4px;
   }
-  
+
   .image-overlay {
     position: absolute;
     inset: 0;
@@ -144,16 +148,16 @@
     padding: 10px;
     opacity: 0;
   }
-  
+
   .gallery-image-container:hover .image-overlay {
     background-color: rgba(0, 0, 0, 0.5);
     opacity: 1;
   }
-  
+
   .image-info {
     color: white;
   }
-  
+
   .image-info h3 {
     margin: 0 0 5px;
     font-size: 16px;
@@ -162,7 +166,7 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  
+
   .image-info p {
     margin: 0 0 5px;
     font-size: 12px;
@@ -170,12 +174,12 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
-  
+
   .image-info time {
     font-size: 10px;
     opacity: 0.8;
   }
-  
+
   .image-error {
     position: absolute;
     inset: 0;
@@ -184,12 +188,12 @@
     justify-content: center;
     background-color: #ffeeee;
   }
-  
+
   .image-error span {
     color: #d32f2f;
     font-size: 12px;
   }
-  
+
   /* Loading and Error States */
   .loading-message,
   .error-message,
@@ -198,11 +202,11 @@
     padding: 20px;
     color: #555;
   }
-  
+
   .error-message {
     color: #d32f2f;
   }
-  
+
   .image-skeleton {
     aspect-ratio: 1;
   }

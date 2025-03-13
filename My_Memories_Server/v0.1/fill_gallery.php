@@ -11,19 +11,20 @@ try {
     $selected_tag = isset($_GET['tag']) ? intval($_GET['tag']) : null;
     $search_query = isset($_GET['search']) ? trim($_GET['search']) : null;
 
-    // Fetch tags
+    // Fetch tags that have at least one image for this owner
     $tag_stmt = $db->prepare("
         SELECT t.tag_id, t.tag_name, COUNT(m.image_id) AS count 
         FROM tags t
         LEFT JOIN memory m ON t.tag_id = m.tag_id AND m.owner_id = :owner_id
         WHERE t.tag_owner = :owner_id AND t.tag_name != ''
         GROUP BY t.tag_id, t.tag_name
+        HAVING COUNT(m.image_id) > 0
     ");
     $tag_stmt->bindParam(':owner_id', $owner_id, PDO::PARAM_INT);
     $tag_stmt->execute();
     $tags = $tag_stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Fetch images with dynamic query
+    // Build the query for fetching images for this owner
     $image_sql = "SELECT * FROM memory WHERE owner_id = :owner_id";
     $params = [':owner_id' => $owner_id];
 
