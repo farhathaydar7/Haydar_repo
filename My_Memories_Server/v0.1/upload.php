@@ -11,7 +11,6 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
-
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
@@ -39,15 +38,19 @@ try {
         throw new InvalidArgumentException('Invalid base64 image data', 400);
     }
 
-    // No temporary file needed for base64 upload, pass imageData directly
+    // Validate MIME type
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mimeType = $finfo->buffer($imageData);
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!in_array($mimeType, $allowedTypes)) {
+        throw new InvalidArgumentException('Invalid image type', 400);
+    }
 
     // Retrieve additional data from the JSON payload
     $owner_id = 1; // Replace with actual user ID if authentication is implemented
     $title = $data['title'] ?? 'Untitled';
     $date = $data['date'] ?? date('Y-m-d');
     $description = $data['description'] ?? '';
-
-    // Get tag name from request
     $tag_name = $data['tag'] ?? null;
 
     // Find or create tag
@@ -58,44 +61,34 @@ try {
         $tag_id = $tagModel->findOrCreateTag($tag_name, $owner_id);
     }
 
-    
-        // Directly call create() with all parameters
-        $memoryCreated = $photoModel->create(
-            $owner_id,
-            $title,
-            $date,
-            $description,
-            $tag_id,
-            $imageData // Pass base64 data directly
-        );
+    // Create memory entry
+    $memoryCreated = $photoModel->create(
+        $owner_id,
+        $title,
+        $date,
+        $description,
+        $tag_id,
+        $imageData
+    );
 
     if ($memoryCreated) {
         echo json_encode([
-            'success'   => true,
-            'message'   => 'Image uploaded successfully',
-            'filePath' => $memoryCreated // Return the file path
+            'success' => true,
+            'message' => 'Image uploaded successfully',
+            'filePath' => $memoryCreated
         ]);
-        exit();
     } else {
         http_response_code(500);
         echo json_encode([
             'success' => false,
-            'message' => 'Image uploaded but failed to save memory info to database'
+            'message' => 'Failed to save memory info to database'
         ]);
-        exit();
     }
 } catch (InvalidArgumentException $e) {
     http_response_code(400);
     echo json_encode(['error' => $e->getMessage()]);
-    exit();
-} catch (RuntimeException $e) {
-    http_response_code(500);
-    echo json_encode(['error' => $e->getMessage()]);
-    exit();
 } catch (Exception $e) {
     http_response_code($e->getCode() ?: 500);
     echo json_encode(['error' => $e->getMessage()]);
-    exit();
 }
-
 ?>

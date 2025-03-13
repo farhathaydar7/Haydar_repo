@@ -2,10 +2,9 @@ import React, { useState } from 'react';
 import API_URL from '../assets/links';
 
 const ImageUploadComponent = () => {
-  // ... (keep all existing state and handler declarations unchanged)
-
   const [previewUrl, setPreviewUrl] = useState(null);
   const [base64Image, setBase64Image] = useState('');
+  const [mimeType, setMimeType] = useState('');
   const [isDragging, setIsDragging] = useState(false);
   const [memoryTitle, setMemoryTitle] = useState('');
   const [memoryDate, setMemoryDate] = useState('');
@@ -20,18 +19,19 @@ const ImageUploadComponent = () => {
 
     const reader = new FileReader();
     reader.onload = (e) => {
-      // Log the full data URL for debugging
-      console.log('Full data URL:', e.target.result);
       const parts = e.target.result.split(',');
       if (parts.length < 2) {
         console.error('Unexpected file reader result format.');
         return;
       }
+
+      // Extract MIME type and base64 data
+      const mimeType = parts[0].match(/:(.*?);/)[1];
       const base64String = parts[1];
-      console.log('Base64 image string:', base64String);
-      console.log('Base64 image string:', base64String);
+
       setPreviewUrl(e.target.result);
       setBase64Image(base64String);
+      setMimeType(mimeType);
     };
     reader.readAsDataURL(file);
   };
@@ -65,6 +65,7 @@ const ImageUploadComponent = () => {
   const removeImage = () => {
     setPreviewUrl(null);
     setBase64Image('');
+    setMimeType('');
   };
 
   const onSubmit = async () => {
@@ -73,15 +74,12 @@ const ImageUploadComponent = () => {
       return;
     }
 
-    // Logging cleanup (remove duplicates)
-    console.log('Submitting image (first 50 chars):', base64Image.substring(0, 50) + '...');
-    console.log('Base64Image length (bytes):', base64Image.length);
-
     const payload = {
       image: base64Image,
+      mime_type: mimeType,
       title: memoryTitle,
       date: memoryDate,
-      tag: tags,  // Changed from tag_id to tag
+      tag: tags,
       description: description,
     };
 
@@ -100,7 +98,6 @@ const ImageUploadComponent = () => {
         data = JSON.parse(text);
       // eslint-disable-next-line no-unused-vars
       } catch (e) {
-        // Handle non-JSON responses
         console.error('Invalid JSON:', text);
         data = { error: `Server returned invalid response: ${text}` };
       }
@@ -114,6 +111,7 @@ const ImageUploadComponent = () => {
         // Reset form after successful upload
         setPreviewUrl(null);
         setBase64Image('');
+        setMimeType('');
         setMemoryTitle('');
         setMemoryDate('');
         setTags('');
@@ -125,47 +123,46 @@ const ImageUploadComponent = () => {
     }
   };
 
-  // ... (keep the return statement and JSX unchanged)
   return (
     <div className="image-upload-container">
       <h1>Upload Memory</h1>
       <div
-  className={`drag-drop-area ${isDragging ? 'dragging' : ''}`}
-  onDragOver={onDragOver}
-  onDragLeave={onDragLeave}
-  onDrop={onDrop}
->
-  <div className="drag-drop-content">
-    <i className="bi bi-cloud-upload"></i>
-    <p>Drag and drop your image here or</p>
-    <label className="upload-btn">
-      <input
-        type="file"
-        onChange={onFileSelected}
-        accept="image/*"
-        style={{ display: 'none' }}
-      />
-      Browse Files
-    </label>
-  </div>
-  {previewUrl && ( // Fixed the syntax here (replaced `:` with `&&`)
-    <div className="image-preview">
-      <img 
-        src={previewUrl} 
-        alt="Preview" 
-        style={{ maxWidth: '200px', maxHeight: '200px' }} 
-      />
-      <button 
-        type="button" 
-        className="remove-btn" 
-        onClick={removeImage}
-        aria-label="Remove image"
+        className={`drag-drop-area ${isDragging ? 'dragging' : ''}`}
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
       >
-        ×
-      </button>
-    </div>
-  )}
-</div>
+        <div className="drag-drop-content">
+          <i className="bi bi-cloud-upload"></i>
+          <p>Drag and drop your image here or</p>
+          <label className="upload-btn">
+            <input
+              type="file"
+              onChange={onFileSelected}
+              accept="image/*"
+              style={{ display: 'none' }}
+            />
+            Browse Files
+          </label>
+        </div>
+        {previewUrl && (
+          <div className="image-preview">
+            <img
+              src={previewUrl}
+              alt="Preview"
+              style={{ maxWidth: '200px', maxHeight: '200px' }}
+            />
+            <button
+              type="button"
+              className="remove-btn"
+              onClick={removeImage}
+              aria-label="Remove image"
+            >
+              ×
+            </button>
+          </div>
+        )}
+      </div>
 
       <div className="form-inputs">
         <label htmlFor="memoryTitle">Memory Title:</label>
