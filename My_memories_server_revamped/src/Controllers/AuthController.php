@@ -5,6 +5,7 @@ use MyApp\Models\UserModel;
 use MyApp\Services\JwtService;
 use MyApp\Exceptions\ValidationException;
 use MyApp\Exceptions\AuthenticationException;
+use MyApp\Exceptions\UserAlreadyExistsException;
 
 class AuthController {
     private $userModel;
@@ -13,6 +14,20 @@ class AuthController {
     public function __construct(UserModel $userModel, JwtService $jwtService) {
         $this->userModel = $userModel;
         $this->jwtService = $jwtService;
+    }
+
+    public function register(array $data): array {
+        try {
+            $userId = $this->userModel->create($data);
+            return [
+                'success' => true,
+                'user_id' => $userId
+            ];
+        } catch (UserAlreadyExistsException $e) {
+            throw $e;
+        } catch (ValidationException $e) {
+            throw $e;
+        }
     }
 
     public function login(string $email, string $password): array {
