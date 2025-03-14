@@ -58,8 +58,10 @@ A RESTful API for managing user photos, tags, and authentication using JWT. Buil
    DB_PASS=
    JWT_SECRET=your_strong_secret_here
    UPLOAD_DIR=./public/uploads
+   APP_ENV=development
+    MIGRATION_KEY=YOUR_MIGRATION_KEY
    ```
-4. Import database schema from `database.sql`.
+4. Migrate using the migration key by calling the endpoint "http://localhost:8000/migration.php?api_key=YOUR_MIGRATION_KEY"
 
 ---
 
