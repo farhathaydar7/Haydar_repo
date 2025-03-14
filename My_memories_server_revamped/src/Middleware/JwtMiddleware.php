@@ -11,24 +11,13 @@ class JwtMiddleware {
         $this->jwtService = $jwtService;
     }
 
-    public function handle(): array {
+    public function handle(): int {
         $headers = getallheaders();
         if (!isset($headers['Authorization'])) {
-            throw new AuthenticationException('Authorization header not found');
+            throw new AuthenticationException('Authorization header required');
         }
 
-        $authHeader = $headers['Authorization'];
-        list($jwt) = sscanf($authHeader, 'Bearer %s');
-
-        if (!$jwt) {
-            throw new AuthenticationException('Token not provided');
-        }
-
-        try {
-            return $this->jwtService->validateToken($jwt);
-        } catch (\Exception $e) {
-            throw new AuthenticationException('Invalid token');
-        }
+        $token = str_replace('Bearer ', '', $headers['Authorization']);
+        return $this->jwtService->validateToken($token)['user_id'];
     }
 }
-?>
