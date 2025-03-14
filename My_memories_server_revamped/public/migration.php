@@ -45,16 +45,12 @@ class DatabaseMigrator {
             // Split into individual statements
             $queries = explode(';', $this->schema[0]);
             
-            $this->pdo->beginTransaction();
-            
             foreach ($queries as $query) {
                 $query = trim($query);
                 if (!empty($query)) {
                     $this->pdo->exec($query);
                 }
             }
-            
-            $this->pdo->commit();
             
             return [
                 'success' => true,
