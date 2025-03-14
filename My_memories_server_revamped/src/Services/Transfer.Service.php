@@ -1,4 +1,5 @@
 <?php
+namespace MyApp\Services;
 
 class TransferService {
     private $baseUploadDir;
