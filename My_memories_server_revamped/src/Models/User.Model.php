@@ -1,16 +1,21 @@
 <?php
+namespace MyApp\Models;
 
-require_once __DIR__ . '/../vendor/autoload.php';
-require_once '../skeletons/User.Skeleton.php';
-
+use PDO;
+use PDOException;
+use RuntimeException;
 use Firebase\JWT\JWT;
+use MyApp\Utils\Database;
+use MyApp\Skeletons\UserSkeleton;
+use MyApp\Exceptions\UserAlreadyExistsException;
+use MyApp\Exceptions\AuthenticationException;
+use MyApp\Exceptions\ValidationException;
 
 class UserModel extends UserSkeleton {
     private $db;
     private $jwtSecret;
 
     public function __construct(PDO $db, string $jwtSecret) {
-        parent::__construct();
         $this->db = $db;
         $this->jwtSecret = $jwtSecret;
     }
@@ -89,7 +94,7 @@ class UserModel extends UserSkeleton {
     }
 
     // Authenticate user and return JWT
-    public function authenticate(string $email, string $password): ?array {
+    public function authenticate(string $email, string $password): array {
         $user = $this->getByEmail($email);
 
         if (!$user || !$this->verifyPassword($password, $user['password'])) {
