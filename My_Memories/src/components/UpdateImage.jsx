@@ -7,11 +7,13 @@ const UpdateImage = () => {
   const { photoId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
+  // eslint-disable-next-line no-unused-vars
   const [loading, setLoading] = useState(!location.state?.initialData);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [preview, setPreview] = useState('');
-  
+  const [tags, setTags] = useState([]); // Store available tags
+
   // Initialize form with location state if available
   const initialData = location.state?.initialData || {};
   const [formData, setFormData] = useState({
@@ -22,60 +24,27 @@ const UpdateImage = () => {
     image: null
   });
 
+  // Fetch available tags
   useEffect(() => {
-    if (!location.state?.initialData) {
-      const fetchPhotoData = async () => {
-        try {
-          const response = await fetch(`${API_URL}v0.1/get_photo.php?photo_id=${photoId}`, {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem('jwt_token')}`
-            }
-          });
-          
-          if (!response.ok) throw new Error('Failed to fetch photo');
-          
-          const { data } = await response.json();
-          initializeForm(data);
-        } catch (err) {
-          setError(err.message);
-        } finally {
-          setLoading(false);
-        }
-      };
-      fetchPhotoData();
-    } else {
-      setPreview(`${API_URL}${initialData.image_url}`);
-      setLoading(false);
-    }
-  }, [photoId, location.state, initialData.image_url]);
+    const fetchTags = async () => {
+      try {
+        const response = await fetch(`${API_URL}v0.1/get_tags.php`, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem('jwt_token')}`
+          }
+        });
+        if (!response.ok) throw new Error('Failed to fetch tags');
+        const data = await response.json();
+        setTags(data.tags);
+      } catch (err) {
+        setError(err.message);
+      }
+    };
 
-  const initializeForm = (data) => {
-    setFormData({
-      title: data.title || '',
-      date: data.date ? data.date.split('T')[0] : '',
-      description: data.description || '',
-      tag: data.tag_name || '',
-      image: null
-    });
-    setPreview(`${API_URL}${data.image_url}`);
-  };
+    fetchTags();
+  }, []);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreview(reader.result);
-      };
-      reader.readAsDataURL(file);
-      setFormData(prev => ({ ...prev, image: file }));
-    }
-  };
-
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
@@ -109,9 +78,7 @@ const UpdateImage = () => {
         throw new Error(errorData.error || 'Update failed');
       }
 
-      navigate(`/photos/${photoId}`, { 
-        state: { refresh: true } 
-      });
+      navigate(`/photos/${photoId}`, { state: { refresh: true } });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -119,6 +86,7 @@ const UpdateImage = () => {
     }
   };
 
+  // Convert image to base64
   const convertToBase64 = (file) => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -144,12 +112,21 @@ const UpdateImage = () => {
         <Typography color="error" paragraph>{error}</Typography>
       )}
 
+      {/* Image upload */}
       <input
         accept="image/*"
         style={{ display: 'none' }}
         id="image-upload"
         type="file"
-        onChange={handleImageChange}
+        onChange={(e) => {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => setPreview(reader.result);
+            reader.readAsDataURL(file);
+            setFormData(prev => ({ ...prev, image: file }));
+          }
+        }}
       />
       <label htmlFor="image-upload">
         <Button variant="contained" component="span" fullWidth sx={{ mb: 2 }}>
@@ -167,55 +144,61 @@ const UpdateImage = () => {
         </Box>
       )}
 
+      {/* Title */}
       <TextField
         fullWidth
         label="Title"
         name="title"
         value={formData.title}
-        onChange={handleChange}
+        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
         margin="normal"
         required
       />
 
+      {/* Date */}
       <TextField
         fullWidth
         label="Date"
         name="date"
         type="date"
         value={formData.date}
-        onChange={handleChange}
+        onChange={(e) => setFormData({ ...formData, date: e.target.value })}
         margin="normal"
         InputLabelProps={{ shrink: true }}
         required
       />
 
+      {/* Description */}
       <TextField
         fullWidth
         label="Description"
         name="description"
         value={formData.description}
-        onChange={handleChange}
+        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
         margin="normal"
         multiline
         rows={4}
       />
 
+      {/* Tag */}
       <FormControl fullWidth margin="normal">
         <InputLabel>Tag</InputLabel>
         <Select
           name="tag"
           value={formData.tag}
-          onChange={handleChange}
+          onChange={(e) => setFormData({ ...formData, tag: e.target.value })}
           label="Tag"
         >
           <MenuItem value=""><em>None</em></MenuItem>
-          <MenuItem value="nature">Nature</MenuItem>
-          <MenuItem value="travel">Travel</MenuItem>
-          <MenuItem value="family">Family</MenuItem>
-          <MenuItem value="friends">Friends</MenuItem>
+          {tags.map((tag) => (
+            <MenuItem key={tag.tag_id} value={tag.tag_name}>
+              {tag.tag_name}
+            </MenuItem>
+          ))}
         </Select>
       </FormControl>
 
+      {/* Submit Button */}
       <Button
         type="submit"
         variant="contained"

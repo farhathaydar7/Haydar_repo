@@ -19,6 +19,7 @@ const GalleryComponent = () => {
   const [error, setError] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
+  // Handle sidebar state and body class
   useEffect(() => {
     const body = document.body;
     if (isSidebarOpen && window.innerWidth <= 1024) {
@@ -27,12 +28,10 @@ const GalleryComponent = () => {
       body.classList.remove('sidebar-open');
     }
 
-    // Cleanup on unmount
-    return () => {
-      body.classList.remove('sidebar-open');
-    };
+    return () => body.classList.remove('sidebar-open');
   }, [isSidebarOpen]);
 
+  // Fetch gallery data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -40,6 +39,7 @@ const GalleryComponent = () => {
         const token = localStorage.getItem("jwt_token");
         const user = localStorage.getItem("user");
         let owner_id = null;
+        
         if (user) {
           try {
             const userData = JSON.parse(user);
@@ -48,6 +48,7 @@ const GalleryComponent = () => {
             console.error("Failed to parse user data:", e);
           }
         }
+
         const params = new URLSearchParams({
           owner_id: owner_id,
           search: searchQuery,
@@ -79,6 +80,7 @@ const GalleryComponent = () => {
     return () => clearTimeout(debounceTimer);
   }, [searchQuery, selectedTag]);
 
+  // Gallery Image Component
   const GalleryImage = ({ image }) => {
     const [loadError, setLoadError] = useState(false);
 
@@ -139,14 +141,9 @@ const GalleryComponent = () => {
     );
   };
 
+  // Toggle sidebar visibility
   const toggleSidebar = () => {
-    if (window.innerWidth <= 1024) {
-      // For mobile: toggle collapsed state directly
-      setIsSidebarOpen(!isSidebarOpen);
-    } else {
-      // For desktop: normal toggle
-      setIsSidebarOpen(!isSidebarOpen);
-    }
+    setIsSidebarOpen(!isSidebarOpen);
   };
 
   const selectedTagName = selectedTag
@@ -157,11 +154,16 @@ const GalleryComponent = () => {
     <div className="gallery-container">
       {loading && <p className="loading-message">Loading...</p>}
       {error && <p className="error-message">{error}</p>}
+      
       <div className="gallery-layout">
         {/* Sidebar */}
-        <div className={`gallery-sidebar ${isSidebarOpen ? "" : "collapsed"}`}
-             onClick={toggleSidebar}>
-          {isSidebarOpen ? "⬅" : "➡"}
+        <div className={`gallery-sidebar ${isSidebarOpen ? "" : "collapsed"}`}>
+          <button 
+            className="sidebar-toggle"
+            onClick={toggleSidebar}
+          >
+            {isSidebarOpen ? "⬅" : "➡"}
+          </button>
 
           {isSidebarOpen && (
             <>
@@ -169,6 +171,7 @@ const GalleryComponent = () => {
                 <h2>Memories Cherished</h2>
                 <p className="pic-count">({galleryData.images.length}) pics</p>
               </div>
+              
               <div className="search-container">
                 <input
                   type="text"
@@ -178,6 +181,7 @@ const GalleryComponent = () => {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
+
               <h2 className="tags-header">Tags</h2>
               <div className="tags-list">
                 {loading ? (

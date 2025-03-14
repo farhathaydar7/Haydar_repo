@@ -4,7 +4,7 @@ header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
 require_once __DIR__.'/../config.php';
-require_once __DIR__.'/../models/User.Model.php';
+require_once __DIR__.'/../models/User.Model.php'; // Only include User.Model.php
 
 header('Content-Type: application/json');
 
@@ -84,3 +84,4 @@ try {
     http_response_code($e->getCode() ?: 500);
     echo json_encode(['error' => $e->getMessage()]);
 }
+?>

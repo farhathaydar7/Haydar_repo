@@ -1,14 +1,13 @@
 <?php
+require_once __DIR__ . '/../vendor/autoload.php'; // Include Composer autoloader
 require_once __DIR__ . '/../config.php';
-require_once __DIR__ . '/../models/Photo.Model.php';
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/../models/Tag.Model.php';
 
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
 header('Content-Type: application/json');
 header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
 // Handle preflight OPTIONS request
@@ -18,7 +17,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 try {
-    // Only allow GET requests
     if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
         throw new Exception('Method not allowed', 405);
     }
@@ -40,35 +38,13 @@ try {
         throw new Exception('Invalid token', 401);
     }
 
-    // Validate photo_id parameter
-    if (!isset($_GET['photo_id'])) {
-        throw new Exception('Photo ID required', 400);
-    }
+    // Fetch tags
+    $tagModel = new TagModel();
+    $tags = $tagModel->getTagsByOwner($user_id);
 
-    $photo_id = $_GET['photo_id'];
-    if (!is_numeric($photo_id)) {
-        throw new Exception('Invalid photo ID', 400);
-    }
-
-    // Fetch photo details
-    $photoModel = new PhotoModel();
-    $photo = $photoModel->getPhotoById($photo_id);
-
-    if (!$photo || $photo['owner_id'] != $user_id) {
-        throw new Exception('Photo not found', 404);
-    }
-
-    // Return photo details
     echo json_encode([
         'success' => true,
-        'data' => [
-            'id' => $photo['id'],
-            'title' => $photo['title'],
-            'date' => $photo['date'],
-            'description' => $photo['description'],
-            'image_url' => $photo['image_url'],
-            'tag_name' => $photo['tag_name']
-        ]
+        'tags' => $tags
     ]);
 
 } catch (Exception $e) {
