@@ -1,23 +1,62 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use MyApp\Utils\Database;
-use MyApp\Services\JwtService;
+use MyApp\Controllers\AuthController;
+use MyApp\Middleware\JwtMiddleware;
 use MyApp\Models\UserModel;
+use MyApp\Services\JwtService;
+use MyApp\Utils\Database;
 
 // Load config
 $config = require __DIR__ . '/../config/config.php';
 
-// Initialize database
+// Initialize dependencies
 $db = Database::getInstance($config['database']);
-
-// Initialize JWT service
-$jwtService = new JwtService($config['jwt']['secret'], $config['jwt']['expiry']);
-
-// Initialize models
 $userModel = new UserModel($db);
+$jwtService = new JwtService($config['jwt']['secret'], $config['jwt']['expiry']);
+$authController = new AuthController($userModel, $jwtService);
+$jwtMiddleware = new JwtMiddleware($jwtService);
 
+// Handle CORS
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
+header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
-$token = $jwtService->generateToken(['user_id' => 1]);
-echo "Generated Token: $token\n"; 
+// Route handling
+$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$method = $_SERVER['REQUEST_METHOD'];
+
+try {
+    if ($uri === '/login' && $method === 'POST') {
+        $data = json_decode(file_get_contents('php://input'), true);
+        $response = $authController->login($data['email'], $data['password']);
+        echo json_encode($response);
+        exit();
+    }
+
+    // Protected routes
+    $decoded = $jwtMiddleware->handle();
+
+    if ($uri === '/protected' && $method === 'GET') {
+        echo json_encode(['success' => true, 'user' => $decoded]);
+        exit();
+    }
+
+    http_response_code(404);
+    echo json_encode(['success' => false, 'message' => 'Route not found']);
+} catch (\MyApp\Exceptions\ValidationException $e) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+} catch (\MyApp\Exceptions\AuthenticationException $e) {
+    http_response_code(401);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+} catch (\Exception $e) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'message' => $e->getMessage()]);
+}
+?>
