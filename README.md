@@ -43,8 +43,8 @@ A RESTful API for managing user photos, tags, and authentication using JWT. Buil
 ### Installation
 1. Clone the repo:
    ```bash
-   git clone https://github.com/yourusername/mymemories-api.git
-   cd mymemories-api
+   git clone https://github.com/farhathaydar7/Haydar_repo.git
+   cd My_memories_server_revamped
    ```
 2. Install dependencies:
    ```bash
@@ -203,7 +203,7 @@ curl -X PUT http://localhost:8000/photos/5 \
 
 ---
 
-**License**: MIT  
-**Maintainer**: Your Name  
-**Version**: 1.0.0
+**License**: Tottally legit MIT liscence 
+**Maintainer**: Haidar Farhat 
+**Version**: 2.0.0
 
