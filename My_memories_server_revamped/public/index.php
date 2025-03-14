@@ -12,7 +12,7 @@ $config = require __DIR__ . '/../config/config.php';
 
 // Initialize dependencies
 $db = Database::getInstance($config['database']);
-$userModel = new UserModel($db);
+$userModel = new UserModel($db, $config['jwt']['secret']);
 $jwtService = new JwtService($config['jwt']['secret'], $config['jwt']['expiry']);
 $authController = new AuthController($userModel, $jwtService);
 $jwtMiddleware = new JwtMiddleware($jwtService);

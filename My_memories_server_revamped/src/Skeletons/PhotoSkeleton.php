@@ -1,4 +1,5 @@
 <?php
+namespace MyApp\Skeletons;
 
 class PhotoSkeleton {
     protected ?int $image_id;

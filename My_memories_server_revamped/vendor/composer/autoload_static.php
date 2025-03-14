@@ -23,9 +23,10 @@ class ComposerStaticInitaf8356de0f328d66bc81deb6a30f9478
         array (
             'PhpOption\\' => 10,
         ),
-        'H' => 
+        'M' => 
         array (
-            'Haydar\\MyMemoriesServerRevamped\\' => 32,
+            'MyApp\\Models\\' => 13,
+            'MyApp\\' => 6,
         ),
         'G' => 
         array (
@@ -58,7 +59,11 @@ class ComposerStaticInitaf8356de0f328d66bc81deb6a30f9478
         array (
             0 => __DIR__ . '/..' . '/phpoption/phpoption/src/PhpOption',
         ),
-        'Haydar\\MyMemoriesServerRevamped\\' => 
+        'MyApp\\Models\\' => 
+        array (
+            0 => __DIR__ . '/../..' . '/src/Models',
+        ),
+        'MyApp\\' => 
         array (
             0 => __DIR__ . '/../..' . '/src',
         ),

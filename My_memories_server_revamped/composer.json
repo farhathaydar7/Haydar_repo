@@ -2,7 +2,8 @@
     "name": "haydar/my_memories_server_revamped",
     "autoload": {
         "psr-4": {
-            "Haydar\\MyMemoriesServerRevamped\\": "src/"
+            "MyApp\\": "src/",
+            "MyApp\\Models\\": "src/Models/"
         }
     },
     "authors": [
