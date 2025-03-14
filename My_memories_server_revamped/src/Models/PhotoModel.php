@@ -1,11 +1,14 @@
 <?php
 
-require_once __DIR__ . '/../skeletons/Photo.Skeleton.php';
+namespace MyApp\Models;
+
+require_once __DIR__ . '/../Skeletons/PhotoSkeleton.php';
+use MyApp\Skeletons\PhotoSkeleton;
 
 class PhotoModel extends PhotoSkeleton {
     private $db;
 
-    public function __construct(PDO $db) {
+    public function __construct(\PDO $db) {
         parent::__construct();
         $this->db = $db;
     }

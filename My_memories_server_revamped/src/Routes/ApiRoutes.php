@@ -1,7 +1,7 @@
 <?php
 namespace MyApp\Routes;
 
-use MyApp\Controllers\PhotoController;
+use MyApp\Controllers\{AuthController, PhotoController};
 use MyApp\Middleware\CorsMiddleware;
 
 class ApiRoutes {
@@ -26,35 +26,42 @@ class ApiRoutes {
             switch(true) {
                 case $uri === '/login' && $method === 'POST':
                     $data = json_decode(file_get_contents('php://input'), true);
-                    response($this->authController->login(
+                    header('Content-Type: application/json');
+                    echo json_encode($this->authController->login(
                         $data['email'],
                         $data['password']
                     ));
-                    break;
+                    exit();
 
                 case $uri === '/register' && $method === 'POST':
                     $data = json_decode(file_get_contents('php://input'), true);
-                    response($this->authController->register($data));
-                    break;
+                    header('Content-Type: application/json');
+                    echo json_encode($this->authController->register($data));
+                    exit();
 
                 case $uri === '/photos' && $method === 'GET':
-                    $photoId = $_GET['photo_id'];
-                    response($this->photoController->getPhoto($photoId));
-                    break;
+                    $photoId = $_GET['photo_id'] ?? null;
+                    header('Content-Type: application/json');
+                    echo json_encode($this->photoController->getPhoto($photoId));
+                    exit();
                     
                 case $uri === '/photos' && $method === 'POST':
                     $data = json_decode(file_get_contents('php://input'), true);
-                    response($this->photoController->uploadPhoto($data));
-                    break;
+                    header('Content-Type: application/json');
+                    echo json_encode($this->photoController->uploadPhoto($data));
+                    exit();
                     
                 default:
                     http_response_code(404);
+                    header('Content-Type: application/json');
                     echo json_encode(['error' => 'Route not found']);
                     exit();
             }
         } catch (\Exception $e) {
             http_response_code($e->getCode() ?: 500);
+            header('Content-Type: application/json');
             echo json_encode(['error' => $e->getMessage()]);
+            exit();
         }
     }
 }
