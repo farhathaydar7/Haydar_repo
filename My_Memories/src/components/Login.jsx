@@ -16,9 +16,11 @@ function Login() {
     setError('');
 
     try {
-      const response = await fetch(API_URL + 'v0.1/login.php', {
+      const response = await fetch(API_URL + 'login', {
         method: 'POST',
-        headers: HEADERS,
+        headers: {
+          'Content-Type': 'application/json'
+        },
         body: JSON.stringify({ email: username, password }),
       });
 
