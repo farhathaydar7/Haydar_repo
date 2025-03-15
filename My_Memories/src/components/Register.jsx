@@ -29,7 +29,7 @@ function Register() {
     }
 
     try {
-      const response = await fetch(API_URL + 'v0.1/register.php', {
+      const response = await fetch(API_URL + 'register', {
         method: 'POST',
         headers: HEADERS,
         body: JSON.stringify({ username, email, password: sha256(password) })
