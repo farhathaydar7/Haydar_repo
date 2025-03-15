@@ -38,6 +38,28 @@ class PhotoModel extends PhotoSkeleton {
     /**
      * Get photo by ID.
      */
+    public function getAllPhotos(int $page = 1, int $perPage = 20): array {
+        $offset = ($page - 1) * $perPage;
+        $stmt = $this->db->prepare("
+            SELECT
+                m.image_id AS id,
+                m.image_url,
+                m.owner_id,
+                m.title,
+                m.date,
+                m.description,
+                t.tag_name
+            FROM memory m
+            LEFT JOIN tags t ON m.tag_id = t.tag_id
+            ORDER BY m.date DESC
+            LIMIT :perPage OFFSET :offset
+        ");
+        $stmt->bindValue(':perPage', $perPage, \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+        $stmt->execute();
+        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+    }
+
     public function getPhotoById(int $photo_id): array {
         $stmt = $this->db->prepare("
             SELECT 

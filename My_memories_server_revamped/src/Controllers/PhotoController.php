@@ -20,9 +20,47 @@ class PhotoController {
         $this->jwtMiddleware = $jwtMiddleware;
     }
 
-    public function getPhoto(int $photoId): array {
+    public function handleGetRequest(?string $photoId = null, int $page = 1, int $perPage = 20): array {
         $userId = $this->jwtMiddleware->handle();
-        return $this->photoModel->getPhotoById($photoId, $userId);
+
+        if ($photoId) {
+            return $this->getPhoto((int)$photoId, $userId);
+        }
+        return $this->getAllPhotos($userId, $page, $perPage);
+    }
+
+    public function getPhoto(int $photoId, int $userId): array {
+        try {
+            $photo = $this->photoModel->getPhotoById($photoId, $userId);
+            return [
+                'success' => true,
+                'data' => $photo
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    public function getAllPhotos(int $userId, int $page = 1, int $perPage = 20): array {
+        try {
+            $photos = $this->photoModel->getAllPhotos($userId, $page, $perPage);
+            return [
+                'success' => true,
+                'data' => $photos,
+                'pagination' => [
+                    'page' => $page,
+                    'per_page' => $perPage
+                ]
+            ];
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
     }
 
     public function uploadPhoto(array $data): array {

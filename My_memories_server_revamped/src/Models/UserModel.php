@@ -139,6 +139,16 @@ class UserModel extends UserSkeleton {
         ];
     }
 
+    // Token verification
+    public function verifyToken(string $token): array {
+        try {
+            $decoded = JWT::decode($token, $this->jwtSecret, ['HS256']);
+            return (array)$decoded;
+        } catch (\Exception $e) {
+            throw new AuthenticationException('Token verification failed: ' . $e->getMessage());
+        }
+    }
+
     // Generate JWT token
     private function generateJwt(UserSkeleton $user): string {
         $payload = [

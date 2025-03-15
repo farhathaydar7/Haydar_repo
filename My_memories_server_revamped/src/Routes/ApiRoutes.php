@@ -14,8 +14,8 @@ class ApiRoutes {
         AuthController $authController,
         CorsMiddleware $corsMiddleware
     ) {
-        $this->authController = $authController;
         $this->photoController = $photoController;
+        $this->authController = $authController;
         $this->corsMiddleware = $corsMiddleware;
     }
 
@@ -23,10 +23,12 @@ class ApiRoutes {
         $this->corsMiddleware->handle();
         
         // Normalize URI
+        $uri = parse_url($uri, PHP_URL_PATH);
         $uri = rtrim($uri, '/') ?: '/';
 
         try {
             switch(true) {
+                // Authentication endpoints
                 case $uri === '/login' && $method === 'POST':
                     $data = json_decode(file_get_contents('php://input'), true);
                     header('Content-Type: application/json');
@@ -42,18 +44,30 @@ class ApiRoutes {
                     echo json_encode($this->authController->register($data));
                     exit();
 
-                case $uri === '/photos' && $method === 'GET':
-                    $photoId = $_GET['photo_id'] ?? null;
+                // Photo endpoints
+                case preg_match('#^/photos/(\d+)$#', $uri, $matches) && $method === 'GET':
+                    $photoId = $matches[1];
                     header('Content-Type: application/json');
                     echo json_encode($this->photoController->getPhoto($photoId));
                     exit();
-                    
+
+                case $uri === '/photos' && $method === 'GET':
+                    header('Content-Type: application/json');
+                    echo json_encode($this->photoController->getAllPhotos());
+                    exit();
+
                 case $uri === '/photos' && $method === 'POST':
                     $data = json_decode(file_get_contents('php://input'), true);
                     header('Content-Type: application/json');
                     echo json_encode($this->photoController->uploadPhoto($data));
                     exit();
-                    
+
+                // Token verification endpoint
+                case $uri === '/verify-token' && $method === 'GET':
+                    header('Content-Type: application/json');
+                    echo json_encode($this->authController->verifyToken());
+                    exit();
+
                 default:
                     http_response_code(404);
                     header('Content-Type: application/json');

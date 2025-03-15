@@ -58,5 +58,30 @@ class AuthController {
             ]
         ];
     }
+         public function verifyToken(): array {
+             $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+             
+             if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+                 throw new AuthenticationException('Authorization header missing or invalid');
+             }
+     
+             $token = $matches[1];
+             
+             try {
+                 $decoded = $this->userModel->verifyToken($token);
+                 return [
+                     'success' => true,
+                     'user' => [
+                         'id' => $decoded['sub'],
+                         'email' => $decoded['email']
+                     ]
+                 ];
+             } catch (AuthenticationException $e) {
+                 return [
+                     'success' => false,
+                     'error' => $e->getMessage()
+                 ];
+             }
+         }
 }
 ?>
