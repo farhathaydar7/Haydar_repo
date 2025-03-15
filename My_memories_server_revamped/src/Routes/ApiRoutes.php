@@ -10,8 +10,8 @@ class ApiRoutes {
     private $corsMiddleware;
 
     public function __construct(
-        AuthController $authController,
         PhotoController $photoController,
+        AuthController $authController,
         CorsMiddleware $corsMiddleware
     ) {
         $this->authController = $authController;
@@ -21,6 +21,9 @@ class ApiRoutes {
 
     public function handle(string $method, string $uri): void {
         $this->corsMiddleware->handle();
+        
+        // Normalize URI
+        $uri = rtrim($uri, '/') ?: '/';
 
         try {
             switch(true) {

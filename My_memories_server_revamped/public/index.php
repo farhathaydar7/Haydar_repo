@@ -36,8 +36,10 @@ $photoController = new PhotoController(
 
 // Handle request
 (new ApiRoutes(
-    $authController,
     $photoController,
+    $authController,
     new CorsMiddleware()
 ))
-    ->handle($_SERVER['REQUEST_METHOD'], parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH));
+    ->handle($_SERVER['REQUEST_METHOD'],
+        rtrim(parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?? '/', '/') ?: '/'
+    );
