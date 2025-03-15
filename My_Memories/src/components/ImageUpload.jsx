@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import API_URL from '../assets/links';
+import API_URL, { PHOTOS_ENDPOINT } from '../assets/links';
 import './component.css/Upload.css';
 
 const Upload = () => {
@@ -116,58 +116,35 @@ const Upload = () => {
 
     setError(''); // Clear any previous errors
 
-    const payload = {
-      image: base64Image,
-      mime_type: mimeType,
-      title: memoryTitle || 'Untitled',
-      date: memoryDate || new Date().toISOString().split('T')[0],
-      tag: tags,
-      description: description,
-      owner_id: userId 
-    };
-
     try {
-      const response = await fetch(`${API_URL}v0.1/upload.php`, {
+      const response = await fetch(PHOTOS_ENDPOINT, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          title: memoryTitle || 'Untitled',
+          date: memoryDate || new Date().toISOString().split('T')[0],
+          description,
+          tag: tags,
+          image: base64Image,
+          mime_type: mimeType,
+          owner_id: userId
+        })
       });
 
-      const text = await response.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      // eslint-disable-next-line no-unused-vars
-      } catch (e) {
-        console.error('Invalid JSON:', text);
-        setError(`Server returned invalid response: ${text}`);
-        return;
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-
-      if (!response.ok || (data && data.error)) {
-        const errorMessage = data.error || data.message || response.statusText;
-        console.error('Upload failed:', errorMessage);
-        setError(`Error uploading image: ${errorMessage}`);
-      } else {
-        alert('Memory uploaded successfully!');
-        // Add to gallery with the complete image data (including preview URL)
-        setGalleryImages([...galleryImages, {
-          ...payload,
-          image: base64Image,
-          preview: previewUrl
-        }]);
-        // Reset form fields
-        setPreviewUrl(null);
-        setBase64Image('');
-        setMimeType('');
-        setMemoryTitle('');
-        setMemoryDate(new Date().toISOString().split('T')[0]);
-        setTags('');
-        setDescription('');
-      }
+      const responseData = await response.json();
+      setGalleryImages([...galleryImages, responseData]);
+      // Reset form fields
+      setPreviewUrl(null);
+      setBase64Image('');
+      setMemoryTitle('');
+      setTags('');
+      setDescription('');
     } catch (error) {
       console.error('Network or parsing error:', error);
       setError(`Error uploading image: ${error.message}`);

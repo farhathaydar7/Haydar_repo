@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import API_URL from "../assets/links.jsx";
+import API from "../assets/api";
 import "./component.css/Gallery.css";
 
 const Skeleton = ({ height, className }) => (
@@ -36,38 +36,18 @@ const GalleryComponent = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const token = localStorage.getItem("jwt_token");
-        const user = localStorage.getItem("user");
-        let owner_id = null;
-        
-        if (user) {
-          try {
-            const userData = JSON.parse(user);
-            owner_id = userData.id;
-          } catch (e) {
-            console.error("Failed to parse user data:", e);
-          }
-        }
+        // Token is handled by API service
 
         const params = new URLSearchParams({
-          owner_id: owner_id,
           search: searchQuery,
-          tag: selectedTag || "",
+          tag: selectedTag || ""
         });
 
-        const response = await fetch(
-          `${API_URL}v0.1/fill_gallery.php?${params}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
-
-        if (!response.ok) throw new Error("Failed to fetch data");
-        const data = await response.json();
-
+        const response = await API.getPhotos(params);
+        
         setGalleryData({
-          tags: data.tags,
-          images: data.images.filter((img) => img.image_data),
+          tags: response.tags,
+          images: response.data.filter(img => img.image_url),
         });
       } catch (err) {
         setError(err.message);
@@ -108,7 +88,7 @@ const GalleryComponent = () => {
           <h4 className="tag-name-header">{image.tag_name}</h4>
         )}
         <img
-          src={`data:${image.mime_type};base64,${image.image_data}`}
+          src={`${API.BASE_URL}${image.image_url}`}
           alt={image.title}
           className="gallery-image"
           onError={() => setLoadError(true)}

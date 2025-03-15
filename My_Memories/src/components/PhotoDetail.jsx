@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, Button, CircularProgress } from '@mui/material';
-import API_URL from '../assets/links.jsx';
+import API_URL, { PHOTOS_ENDPOINT } from '../assets/links.jsx';
 
 const PhotoDetail = () => {
   const { photoId } = useParams();
@@ -13,7 +13,7 @@ const PhotoDetail = () => {
   useEffect(() => {
     const fetchPhoto = async () => {
       try {
-        const response = await fetch(`${API_URL}v0.1/get_photo.php?photo_id=${photoId}`, {
+        const response = await fetch(`${PHOTOS_ENDPOINT}/${photoId}`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('jwt_token')}`
           }
@@ -21,7 +21,7 @@ const PhotoDetail = () => {
 
         if (!response.ok) throw new Error('Failed to fetch photo');
         
-        const { data } = await response.json();
+        const data = await response.json();
         setPhoto(data);
       } catch (err) {
         setError(err.message);
