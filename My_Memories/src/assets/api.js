@@ -1,59 +1,65 @@
-import API_URL from './links.jsx';
-
+import API_URL from "./links";
 const API = {
-  BASE_URL: API_URL,
-  
-  async request(method, endpoint, data = null) {
-    const url = `${this.BASE_URL}${endpoint}`;
-    const token = localStorage.getItem('jwt_token');
+    BASE_URL: API_URL,
     
-    const config = {
-      method,
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+    async request(method, endpoint, data = null) {
+      const url = `${this.BASE_URL}${endpoint}`;
+      const token = localStorage.getItem('jwt_token');
+      
+      const config = {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      };
+  
+      if (data) {
+        config.body = JSON.stringify(data);
       }
-    };
-
-    if (data) config.body = JSON.stringify(data);
-
-    const response = await fetch(url, config);
-    const responseData = await response.json();
-
-    if (!response.ok) {
-      throw new Error(responseData.error || 'API request failed');
+  
+      try {
+        const response = await fetch(url, config);
+        
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+        }
+  
+        return await response.json();
+      } catch (error) {
+        console.error('API request failed:', error);
+        throw error;
+      }
+    },
+  
+    // Photo Endpoints
+    getPhotos(params = {}) {
+      const query = new URLSearchParams(params).toString();
+      return this.request('GET', `/photos?${query}`);
+    },
+  
+    getPhotoDetails(id) {
+      return this.request('GET', `/photos/${id}`);
+    },
+  
+    uploadPhoto(data) {
+      return this.request('POST', '/photos', data);
+    },
+  
+    updatePhoto(id, data) {
+      return this.request('PUT', `/photos/${id}`, data);
+    },
+  
+    // Tag Endpoints
+    getTags() {
+      return this.request('GET', '/tags');
+    },
+  
+    // Auth Endpoints
+    async verifyToken() {
+      return this.request('GET', '/verify-token');
     }
-
-    return responseData;
-  },
-
-  getPhotos(params) {
-    const query = new URLSearchParams(params).toString();
-    return this.request('GET', `/photos?${query}`);
-  },
-
-  getPhotoDetails(id) {
-    return this.request('GET', `/photos/${id}`);
-  },
-
-  uploadPhoto(data) {
-    return this.request('POST', '/photos', data);
-  },
-
-  updatePhoto(id, data) {
-    return this.request('PUT', `/photos/${id}`, data);
-  },
-
-  getTags() {
-    return this.request('GET', '/tags');
-  },
-
-  async verifyToken(token) {
-    const response = await fetch(`${this.BASE_URL}/verify-token`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    return response.ok;
-  }
-};
-
-export default API;
+  };
+  
+  export default API;

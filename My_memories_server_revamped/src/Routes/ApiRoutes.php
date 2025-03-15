@@ -24,7 +24,8 @@ class ApiRoutes {
         
         // Normalize URI
         $uri = parse_url($uri, PHP_URL_PATH);
-        $uri = rtrim($uri, '/') ?: '/';
+        $uri = preg_replace('#/+#', '/', $uri);
+        $uri = rtrim($uri, '/') ?: '/'; // Only trim trailing slash
 
         try {
             switch(true) {
@@ -51,9 +52,12 @@ class ApiRoutes {
                     echo json_encode($this->photoController->getPhoto($photoId));
                     exit();
 
-                case $uri === '/photos' && $method === 'GET':
+                case str_starts_with($uri, '/photos') && $method === 'GET':
                     header('Content-Type: application/json');
-                    echo json_encode($this->photoController->getAllPhotos());
+                    echo json_encode($this->photoController->getAllPhotos(
+                        $_GET['search'] ?? '',
+                        $_GET['tag'] ?? ''
+                    ));
                     exit();
 
                 case $uri === '/photos' && $method === 'POST':
@@ -61,8 +65,20 @@ class ApiRoutes {
                     header('Content-Type: application/json');
                     echo json_encode($this->photoController->uploadPhoto($data));
                     exit();
-
-                // Token verification endpoint
+    
+                    case preg_match('#^/photos/(\d+)$#', $uri, $matches) && $method === 'PUT':
+                        $photoId = $matches[1];
+                        $data = json_decode(file_get_contents('php://input'), true);
+                        header('Content-Type: application/json');
+                        echo json_encode($this->photoController->updatePhoto($photoId, $data));
+                        exit();
+    
+                    case $uri === '/tags' && $method === 'GET':
+                        header('Content-Type: application/json');
+                        echo json_encode($this->photoController->getTags());
+                        exit();
+    
+                    // Token verification endpoint
                 case $uri === '/verify-token' && $method === 'GET':
                     header('Content-Type: application/json');
                     echo json_encode($this->authController->verifyToken());
