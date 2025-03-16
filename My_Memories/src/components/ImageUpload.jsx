@@ -4,7 +4,7 @@ import API from '../services/API';
 import usePhoto from '../models/Photo.model';
 import useTag from '../models/Tag.model';
 import './component.css/Upload.css';
-import './component.css/Upload.css';
+
 
 const Upload = () => {
   // Use the photo state and setter from the usePhoto hook
