@@ -3,6 +3,8 @@
 namespace MyApp\Models;
 
 require_once __DIR__ . '/../Skeletons/PhotoSkeleton.php';
+use PDO; 
+use Exception;
 use MyApp\Skeletons\PhotoSkeleton;
 
 class PhotoModel extends PhotoSkeleton {
@@ -51,11 +53,10 @@ public function create(int $owner_id, string $title, string $date, string $descr
     /**
      * Get photo by ID.
      */
-    public function getAllPhotos(int $userId, int $page = 1, int $perPage = 20, string $search = '', string $tag = ''): array {
-        $offset = ($page - 1) * $perPage;
-    
+    // PhotoModel.php
+    public function getAllPhotos(int $userId, string $search = '', string $tag = ''): array {
         // Build the SQL query
-        $sql = "SELECT * FROM memory WHERE owner_id = :userId"; // Changed 'photos' to 'memory'
+        $sql = "SELECT * FROM memory WHERE owner_id = :userId";
         $params = ['userId' => $userId];
     
         // Add search filter
@@ -70,30 +71,12 @@ public function create(int $owner_id, string $title, string $date, string $descr
             $params['tag'] = $tag;
         }
     
-        // Add pagination
-        $sql .= " LIMIT :limit OFFSET :offset";
-        $params['limit'] = $perPage; // Integer
-        $params['offset'] = $offset; // Integer
-    
-        // Prepare the query
+        // Prepare and execute the query
         $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
     
-        // Bind parameters with explicit types
-        $stmt->bindValue(':userId', $userId, \PDO::PARAM_INT);
-        if (!empty($search)) {
-            $stmt->bindValue(':search', $params['search'], \PDO::PARAM_STR);
-        }
-        if (!empty($tag)) {
-            $stmt->bindValue(':tag', $params['tag'], \PDO::PARAM_STR);
-        }
-        $stmt->bindValue(':limit', $params['limit'], \PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $params['offset'], \PDO::PARAM_INT);
-    
-        // Execute the query
-        $stmt->execute();
-    
-        // Fetch and return the results
-        return $stmt->fetchAll(\PDO::FETCH_ASSOC);
+        // Fetch and return results
+        return $stmt->fetchAll(PDO::FETCH_ASSOC); // Use PDO::FETCH_ASSOC
     }
 
     public function getPhotoById(int $photo_id): array {

@@ -55,29 +55,11 @@ class ApiRoutes {
                     case str_starts_with($uri, '/photos') && $method === 'GET':
                         header('Content-Type: application/json');
                         $userId = $this->photoController->getUserIdFromToken();
-                        
-                        // Fetch photos and tags
-                        $result = $this->photoController->getAllPhotos(
+                        $response = $this->photoController->getAllPhotos(
                             $userId,
                             $_GET['page'] ?? 1,
                             $_GET['per_page'] ?? 20
                         );
-                    
-                        // Ensure consistent response structure
-                        $response = [
-                            'success' => true,
-                            'data' => [
-                                'images' => $result['images'] ?? [], // Always return an array
-                                'tags' => $result['tags'] ?? []
-                            ],
-                            'pagination' => $result['pagination'] ?? null
-                        ];
-                    
-                        // Add message only if no images
-                        if (empty($response['data']['images'])) {
-                            $response['message'] = 'No images found';
-                        }
-                    
                         echo json_encode($response);
                         exit();
 

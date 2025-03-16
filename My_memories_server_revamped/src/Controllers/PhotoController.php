@@ -50,26 +50,20 @@ class PhotoController {
             ];
         }
     }
-
-    public function getAllPhotos(int $userId, int $page = 1, int $perPage = 20): array {
+    public function getAllPhotos(int $userId): array {
         try {
-            $photos = $this->photoModel->getAllPhotos($userId, $page, $perPage);
-            
+            $photos = $this->photoModel->getAllPhotos($userId);
+            $tags = $this->tagModel->getTagsByOwner($userId);
+    
             foreach ($photos as &$photo) {
-                try {
-                    $photo['image_base64'] = $this->imageService->getImageAsBase64($photo['image_url']);
-                } catch (ImageProcessingException $e) {
-                    $photo['image_base64'] = null;
-                    $photo['image_error'] = $e->getMessage();
-                }
+                $photo['image_url'] = "http://localhost:8000" . $photo['image_url'];
             }
     
             return [
                 'success' => true,
-                'data' => $photos,
-                'pagination' => [
-                    'page' => $page,
-                    'per_page' => $perPage
+                'data' => [
+                    'images' => $photos,
+                    'tags' => $tags
                 ]
             ];
         } catch (\Exception $e) {

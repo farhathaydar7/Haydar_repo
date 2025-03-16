@@ -1,4 +1,28 @@
 <?php
+// Serve static files from uploads directory
+$requestUri = $_SERVER['REQUEST_URI'];
+$uploadsPath = __DIR__ . '/../uploads' . $requestUri;
+
+if (file_exists($uploadsPath)) {
+    // Set proper MIME type for images
+    $mimeTypes = [
+        '.jpg' => 'image/jpeg',
+        '.jpeg' => 'image/jpeg',
+        '.png' => 'image/png',
+        '.gif' => 'image/gif'
+    ];
+
+    $extension = strtolower(pathinfo($uploadsPath, PATHINFO_EXTENSION));
+    if (isset($mimeTypes['.' . $extension])) {
+        header('Content-Type: ' . $mimeTypes['.' . $extension]);
+    }
+
+    // Serve the file directly
+    readfile($uploadsPath);
+    exit();
+}
+
+// Load dependencies
 require_once __DIR__.'/../vendor/autoload.php';
 
 use MyApp\Routes\ApiRoutes;
@@ -20,9 +44,6 @@ $db = Database::getInstance($config['database']);
 $jwtService = new JwtService($config['jwt']['secret'], $config['jwt']['expiry']);
 
 $jwtMiddleware = new JwtMiddleware($jwtService); // Now has access to initialized JwtService
-
-// Initialize database connection
-$db = Database::getInstance($config['database']);
 
 // Models (depend on DB)
 $userModel = new UserModel($db, $config['jwt']['secret']);

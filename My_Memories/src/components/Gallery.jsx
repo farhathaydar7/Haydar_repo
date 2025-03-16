@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/API";
-import { validateDescription } from "../models/Photo.model.jsx";
 import "./component.css/Gallery.css";
 
 // Skeleton loading component
@@ -16,7 +15,9 @@ const GalleryComponent = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTag, setSelectedTag] = useState(null);
-  const [galleryData, setGalleryData] = useState({ tags: [], images: [] });
+  const [allImages, setAllImages] = useState([]);
+  const [filteredImages, setFilteredImages] = useState([]);
+  const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -33,48 +34,46 @@ const GalleryComponent = () => {
     return () => body.classList.remove('sidebar-open');
   }, [isSidebarOpen]);
 
-  // Fetch gallery data
+  // Fetch initial data
   useEffect(() => {
-    const fetchData = async () => {
+    const fetchInitialData = async () => {
       try {
-        setLoading(true);
-        const response = await API.getPhotos({
-          search: searchQuery,
-          tag: selectedTag || ""
-        });
-
-        // Extract images and tags from the API response
-        const images = response.data?.images || []; // Fallback to empty array
+        const response = await API.getPhotos({ search: '', tag: '' });
+        const images = response.data?.images || [];
         const tags = response.data?.tags || [];
-
-        // Filter valid images and add base64 data
-        const validImages = await Promise.all(
-          images
-            .filter(img => img.image_url && validateDescription(img.description))
-            .map(async (img) => {
-              try {
-                const base64Data = await API.getImageAsBase64(img.image_url);
-                return { ...img, image_base64: base64Data };
-              } catch (error) {
-                console.error("Failed to load image as base64:", error);
-                return { ...img, image_base64: null, image_error: error.message };
-              }
-            })
-        );
-
-        // Update state with images and tags
-        setGalleryData({ tags, images: validImages });
+        
+        setAllImages(images.map(img => ({
+          ...img
+        })));
+        setFilteredImages(images);
+        setTags(tags);
       } catch (err) {
         setError(err.response?.data?.error || err.message);
       } finally {
         setLoading(false);
       }
     };
+    fetchInitialData();
+  }, []);
 
-    const debounceTimer = setTimeout(fetchData, 300);
-    return () => clearTimeout(debounceTimer);
-  }, [searchQuery, selectedTag, validateDescription]);
+  // Filter images when search or tag changes
+  useEffect(() => {
+    let filtered = allImages;
 
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(img =>
+        (img.title || '').toLowerCase().includes(query) ||
+        (img.description || '').toLowerCase().includes(query)
+      );
+    }
+
+    if (selectedTag) {
+      filtered = filtered.filter(img => img.tag_id === selectedTag);
+    }
+
+    setFilteredImages(filtered);
+  }, [searchQuery, selectedTag, allImages]);
   // Gallery Image Component
   const GalleryImage = ({ image }) => {
     const [loadError, setLoadError] = useState(false);
@@ -149,7 +148,7 @@ const GalleryComponent = () => {
   };
 
   const selectedTagName = selectedTag
-    ? galleryData.tags.find((t) => t.tag_id === selectedTag)?.tag_name
+    ? tags.find((t) => t.tag_id === selectedTag)?.tag_name || "All Photos"
     : "All Photos";
 
   return (
@@ -171,7 +170,7 @@ const GalleryComponent = () => {
             <>
               <div className="sidebar-header">
                 <h2>Memories Cherished</h2>
-                <p className="pic-count">({galleryData.images.length}) pics</p>
+                <p className="pic-count">({filteredImages.length}) pics</p>
               </div>
               
               <div className="search-container">
@@ -195,7 +194,7 @@ const GalleryComponent = () => {
                 ) : error ? (
                   <div className="error-message">{error}</div>
                 ) : (
-                  galleryData.tags.map((tag) => (
+                  tags.map((tag) => (
                     <div
                       key={tag.tag_id}
                       className={`tag-item ${
@@ -219,7 +218,7 @@ const GalleryComponent = () => {
         {/* Main Content */}
         <div className="gallery-content">
           {/* Tag Section Headers */}
-          {(galleryData.tags.length > 0 || galleryData.images.length > 0) && (
+          {(tags.length > 0 || filteredImages.length > 0) && (
             <h1 className="tag-section-header">{selectedTagName}</h1>
           )}
 
@@ -231,12 +230,12 @@ const GalleryComponent = () => {
                 .map((_, i) => <Skeleton key={i} className="image-skeleton" />)
             ) : error ? (
               <div className="centered-message error-message">{error}</div>
-            ) : galleryData.images.length === 0 ? (
+            ) : filteredImages.length === 0 ? (
               <div className="centered-message">
                 No photos found for your search.
               </div>
             ) : (
-              galleryData.images.map((image) => (
+              filteredImages.map((image) => (
                 <GalleryImage key={image.image_id} image={image} />
               ))
             )}

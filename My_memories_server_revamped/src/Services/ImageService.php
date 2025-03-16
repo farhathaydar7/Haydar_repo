@@ -44,7 +44,7 @@ class ImageService {
             throw new ImageProcessingException('Failed to save image');
         }
 
-        return $filePath;
+        return "/uploads/{$userId}/{$filename}";
     }
 
     /**
