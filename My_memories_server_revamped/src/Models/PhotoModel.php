@@ -38,25 +38,48 @@ class PhotoModel extends PhotoSkeleton {
     /**
      * Get photo by ID.
      */
-    public function getAllPhotos(int $page = 1, int $perPage = 20): array {
+    public function getAllPhotos(int $userId, int $page = 1, int $perPage = 20, string $search = '', string $tag = ''): array {
         $offset = ($page - 1) * $perPage;
-        $stmt = $this->db->prepare("
-            SELECT
-                m.image_id AS id,
-                m.image_url,
-                m.owner_id,
-                m.title,
-                m.date,
-                m.description,
-                t.tag_name
-            FROM memory m
-            LEFT JOIN tags t ON m.tag_id = t.tag_id
-            ORDER BY m.date DESC
-            LIMIT :perPage OFFSET :offset
-        ");
-        $stmt->bindValue(':perPage', $perPage, \PDO::PARAM_INT);
-        $stmt->bindValue(':offset', $offset, \PDO::PARAM_INT);
+    
+        // Build the SQL query
+        $sql = "SELECT * FROM memory WHERE owner_id = :userId"; // Changed 'photos' to 'memory'
+        $params = ['userId' => $userId];
+    
+        // Add search filter
+        if (!empty($search)) {
+            $sql .= " AND (title LIKE :search OR description LIKE :search)";
+            $params['search'] = "%$search%";
+        }
+    
+        // Add tag filter
+        if (!empty($tag)) {
+            $sql .= " AND tag_id = :tag";
+            $params['tag'] = $tag;
+        }
+    
+        // Add pagination
+        $sql .= " LIMIT :limit OFFSET :offset";
+        $params['limit'] = $perPage; // Integer
+        $params['offset'] = $offset; // Integer
+    
+        // Prepare the query
+        $stmt = $this->db->prepare($sql);
+    
+        // Bind parameters with explicit types
+        $stmt->bindValue(':userId', $userId, \PDO::PARAM_INT);
+        if (!empty($search)) {
+            $stmt->bindValue(':search', $params['search'], \PDO::PARAM_STR);
+        }
+        if (!empty($tag)) {
+            $stmt->bindValue(':tag', $params['tag'], \PDO::PARAM_STR);
+        }
+        $stmt->bindValue(':limit', $params['limit'], \PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $params['offset'], \PDO::PARAM_INT);
+    
+        // Execute the query
         $stmt->execute();
+    
+        // Fetch and return the results
         return $stmt->fetchAll(\PDO::FETCH_ASSOC);
     }
 

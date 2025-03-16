@@ -65,14 +65,23 @@ class TagModel extends TagSkeleton {
     /**
      * Create a new tag.
      */
-    private function createTag(string $tag_name, int $owner_id): int {
-        $stmt = $this->db->prepare("
-            INSERT INTO tags (tag_name, tag_owner)
-            VALUES (:tag_name, :owner_id)
-        ");
-        $stmt->execute([':tag_name' => $tag_name, ':owner_id' => $owner_id]);
-        return (int)$this->db->lastInsertId();
-    }
+    
+public function createTag(string $tagName, int $userId): array {
+    $stmt = $this->db->prepare("
+        INSERT INTO tags (tag_name, tag_owner)
+        VALUES (:tag_name, :tag_owner)
+    ");
+    
+    $stmt->execute([
+        ':tag_name' => $tagName,
+        ':tag_owner' => $userId
+    ]);
+    
+    return [
+        'success' => true,
+        'tag_id' => $this->db->lastInsertId()
+    ];
+}
 
     /**
      * Validate tag data.
@@ -85,6 +94,21 @@ class TagModel extends TagSkeleton {
         if (empty($owner_id)) {
             throw new ValidationException("Owner ID cannot be empty");
         }
+    }
+    public function getTagByName(string $tagName, int $userId): ?array {
+        $stmt = $this->db->prepare("
+            SELECT tag_id 
+            FROM tags 
+            WHERE tag_name = :tag_name 
+            AND tag_owner = :user_id
+        ");
+        
+        $stmt->execute([
+            ':tag_name' => $tagName,
+            ':user_id' => $userId
+        ]);
+        
+        return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
     }
 
     /**

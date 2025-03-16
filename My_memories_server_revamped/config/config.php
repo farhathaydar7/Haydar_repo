@@ -19,7 +19,7 @@ return [
         'expiry' => $_ENV['JWT_EXPIRY'] ?? 3600,
     ],
     'uploads' => [
-        'dir' => $_ENV['UPLOAD_DIR'] ?? __DIR__ . '/../public/uploads',
-        'max_size' => $_ENV['UPLOAD_MAX_SIZE'] ?? 5 * 1024 * 1024,
+        'dir' => __DIR__ . '/../../public/assets/photos', // Absolute server path
+        'public_path' => '/assets/photos/' // URL path
     ],
 ];

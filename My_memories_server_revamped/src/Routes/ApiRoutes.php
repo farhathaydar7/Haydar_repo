@@ -52,13 +52,19 @@ class ApiRoutes {
                     echo json_encode($this->photoController->getPhoto($photoId));
                     exit();
 
-                case str_starts_with($uri, '/photos') && $method === 'GET':
-                    header('Content-Type: application/json');
-                    echo json_encode($this->photoController->getAllPhotos(
-                        $_GET['search'] ?? '',
-                        $_GET['tag'] ?? ''
-                    ));
-                    exit();
+                    case str_starts_with($uri, '/photos') && $method === 'GET':
+                        header('Content-Type: application/json');
+                        
+                        // Get the authenticated user ID from the JWT token
+                        $userId = $this->photoController->getUserIdFromToken();
+                        
+                        // Pass the correct arguments
+                        echo json_encode($this->photoController->getAllPhotos(
+                            $userId, // Pass the user ID
+                            $_GET['page'] ?? 1, // Optional: Pagination page
+                            $_GET['per_page'] ?? 20 // Optional: Items per page
+                        ));
+                        exit();
 
                 case $uri === '/photos' && $method === 'POST':
                     $data = json_decode(file_get_contents('php://input'), true);
@@ -84,6 +90,14 @@ class ApiRoutes {
                     echo json_encode($this->authController->verifyToken());
                     exit();
 
+
+                    // ApiRoutes.php
+case $uri === '/image-base64' && $method === 'GET':
+    $imageUrl = $_GET['url'] ?? '';
+    header('Content-Type: application/json');
+    echo json_encode($this->photoController->getImageAsBase64($imageUrl));
+    exit();
+    
                 default:
                     http_response_code(404);
                     header('Content-Type: application/json');

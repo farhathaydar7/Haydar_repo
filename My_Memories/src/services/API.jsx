@@ -1,9 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: import.meta.env.MODE === 'production'
-    ? 'https://your-api-domain.com'
-    : 'http://localhost:8000',
+  baseURL: 'http://localhost:8000', // Hardcoded backend URL
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json'
@@ -47,7 +45,7 @@ export const isTokenValid = (token) => {
 export default {
   // Authentication
   login: (credentials) => API.post('/login', credentials),
-  register: (userData) => API.post('/register', userData), // Already exists in current implementation
+  register: (userData) => API.post('/register', userData),
   verifyToken: () => API.get('/verify-token'),
 
   // Photos
@@ -67,5 +65,17 @@ export default {
     reader.readAsDataURL(file);
     reader.onload = () => resolve(reader.result);
     reader.onerror = error => reject(error);
-  })
+  }),
+
+  // New method: Get image as base64
+  getImageAsBase64: async (imageUrl) => {
+    try {
+      const response = await API.get('/image-base64', {
+        params: { url: imageUrl }
+      });
+      return response.data.base64;
+    } catch (error) {
+      throw new Error(error.response?.data?.error || 'Failed to fetch image as base64');
+    }
+  }
 };

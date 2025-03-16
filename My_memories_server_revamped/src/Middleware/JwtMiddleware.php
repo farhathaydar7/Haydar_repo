@@ -2,7 +2,7 @@
 namespace MyApp\Middleware;
 
 use MyApp\Services\JwtService;
-use MyApp\Exceptions\AuthenticationException;
+use Exception;
 
 class JwtMiddleware {
     private $jwtService;
@@ -11,13 +11,23 @@ class JwtMiddleware {
         $this->jwtService = $jwtService;
     }
 
+    /**
+     * Handle the JWT token and return the user ID.
+     */
     public function handle(): int {
-        $headers = getallheaders();
-        if (!isset($headers['Authorization'])) {
-            throw new AuthenticationException('Authorization header required');
-        }
+        $token = $this->getTokenFromHeader();
+        $decoded = $this->jwtService->decode($token);
+        return (int) $decoded['sub']; // Ensure this returns the user ID as an integer
+    }
 
-        $token = str_replace('Bearer ', '', $headers['Authorization']);
-        return $this->jwtService->validateToken($token)['user_id'];
+    /**
+     * Extract the JWT token from the Authorization header.
+     */
+    private function getTokenFromHeader(): string {
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            throw new Exception('Authorization header missing or invalid');
+        }
+        return $matches[1];
     }
 }

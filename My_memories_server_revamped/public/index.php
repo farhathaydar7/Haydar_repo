@@ -21,7 +21,11 @@ $userModel = new UserModel($db, $config['jwt']['secret']);
 $photoModel = new PhotoModel($db);
 
 // Services
-$imageService = new ImageService($config['uploads']['dir']);
+
+$imageService = new ImageService(
+    $config['uploads']['dir'],
+    $config['uploads']['public_path']
+);
 
 // Controllers
 $authController = new AuthController(

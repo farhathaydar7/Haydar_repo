@@ -19,6 +19,9 @@ class PhotoController {
         $this->imageService = $imageService;
         $this->jwtMiddleware = $jwtMiddleware;
     }
+    public function getUserIdFromToken(): int {
+        return $this->jwtMiddleware->handle(); // This should return the user ID
+    }
 
     public function handleGetRequest(?string $photoId = null, int $page = 1, int $perPage = 20): array {
         $userId = $this->jwtMiddleware->handle();
@@ -47,6 +50,16 @@ class PhotoController {
     public function getAllPhotos(int $userId, int $page = 1, int $perPage = 20): array {
         try {
             $photos = $this->photoModel->getAllPhotos($userId, $page, $perPage);
+            
+            foreach ($photos as &$photo) {
+                try {
+                    $photo['image_base64'] = $this->imageService->getImageAsBase64($photo['image_url']);
+                } catch (ImageProcessingException $e) {
+                    $photo['image_base64'] = null;
+                    $photo['image_error'] = $e->getMessage();
+                }
+            }
+    
             return [
                 'success' => true,
                 'data' => $photos,
@@ -66,18 +79,50 @@ class PhotoController {
     public function uploadPhoto(array $data): array {
         $userId = $this->jwtMiddleware->handle();
         
+        // Process image upload
         $imagePath = $this->imageService->processUpload(
             $data['image'],
             $userId
         );
-
+    
+        // Handle tag creation/retrieval
+        $tagId = null;
+        if (!empty($data['tag'])) {
+            // Check if tag exists
+            $existingTag = $this->tagModel->getTagByName($data['tag'], $userId);
+            
+            if ($existingTag) {
+                $tagId = $existingTag['tag_id'];
+            } else {
+                // Create new tag
+                $newTag = $this->tagModel->createTag($data['tag'], $userId);
+                $tagId = $newTag['tag_id'];
+            }
+        }
+    
         return $this->photoModel->create(
             $userId,
             $data['title'],
             $data['date'],
             $data['description'],
-            $data['tag_id'],
+            $tagId, // Now guaranteed to be int|null
             $imagePath
         );
     }
+
+   
+public function getImageAsBase64(string $imageUrl): array {
+    try {
+        $base64 = $this->imageService->getImageAsBase64($imageUrl);
+        return [
+            'success' => true,
+            'base64' => $base64
+        ];
+    } catch (ImageProcessingException $e) {
+        return [
+            'success' => false,
+            'error' => $e->getMessage()
+        ];
+    }
+}
 }

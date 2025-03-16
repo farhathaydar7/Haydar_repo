@@ -42,8 +42,19 @@ const GalleryComponent = () => {
           tag: selectedTag || ""
         });
 
-        const validImages = response.data.filter(img =>
-          img.image_url && validateDescription(img.description)
+        // Filter valid images and add base64 data
+        const validImages = await Promise.all(
+          response.data
+            .filter(img => img.image_url && validateDescription(img.description))
+            .map(async (img) => {
+              try {
+                const base64Data = await API.getImageAsBase64(img.image_url);
+                return { ...img, image_base64: base64Data };
+              } catch (error) {
+                console.error("Failed to load image as base64:", error);
+                return { ...img, image_base64: null, image_error: error.message };
+              }
+            })
         );
 
         setGalleryData({
@@ -88,12 +99,19 @@ const GalleryComponent = () => {
         {image.tag_name && (
           <h4 className="tag-name-header">{image.tag_name}</h4>
         )}
-        <img
-          src={`${API.BASE_URL}${image.image_url}`}
-          alt={image.title}
-          className="gallery-image"
-          onError={() => setLoadError(true)}
-        />
+
+        {image.image_base64 ? (
+          <img
+            src={image.image_base64}
+            alt={image.title}
+            className="gallery-image"
+            onError={() => setLoadError(true)}
+          />
+        ) : (
+          <div className="image-error">
+            {image.image_error || "Failed to load image"}
+          </div>
+        )}
 
         <div className="image-overlay">
           <div className="image-info">
