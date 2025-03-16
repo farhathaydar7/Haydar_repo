@@ -68,7 +68,12 @@ class ApiRoutes {
                     header('Content-Type: application/json');
                     echo json_encode($this->photoController->uploadPhoto($data));
                     exit();
-    
+   
+case $uri === '/image-base64' && $method === 'GET':
+    $imageUrl = $_GET['url'] ?? '';
+    header('Content-Type: application/json');
+    echo json_encode($this->photoController->getImageAsBase64($imageUrl));
+    exit();
                     case preg_match('#^/photos/(\d+)$#', $uri, $matches) && $method === 'PUT':
                         $photoId = $matches[1];
                         $data = json_decode(file_get_contents('php://input'), true);

@@ -50,29 +50,35 @@ class PhotoController {
             ];
         }
     }
-    public function getAllPhotos(int $userId): array {
-        try {
-            $photos = $this->photoModel->getAllPhotos($userId);
-            $tags = $this->tagModel->getTagsByOwner($userId);
-    
-            foreach ($photos as &$photo) {
-                $photo['image_url'] = "http://localhost:8000" . $photo['image_url'];
+    // PhotoController.php
+public function getAllPhotos(int $userId): array {
+    try {
+        $photos = $this->photoModel->getAllPhotos($userId);
+        $tags = $this->tagModel->getTagsByOwner($userId);
+
+        foreach ($photos as &$photo) {
+            try {
+                $photo['image_base64'] = $this->imageService->getImageAsBase64($photo['image_url']);
+            } catch (ImageProcessingException $e) {
+                $photo['image_base64'] = null;
+                $photo['image_error'] = $e->getMessage();
             }
-    
-            return [
-                'success' => true,
-                'data' => [
-                    'images' => $photos,
-                    'tags' => $tags
-                ]
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'error' => $e->getMessage()
-            ];
         }
+
+        return [
+            'success' => true,
+            'data' => [
+                'images' => $photos,
+                'tags' => $tags
+            ]
+        ];
+    } catch (\Exception $e) {
+        return [
+            'success' => false,
+            'error' => $e->getMessage()
+        ];
     }
+}
 
     public function uploadPhoto(array $data): array {
         try {

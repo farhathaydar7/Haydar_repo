@@ -68,15 +68,14 @@ export default {
     reader.onerror = error => reject(error);
   }),
 
-  // New method: Get image as base64
-  getImageAsBase64: async (imageUrl) => {
+  getImageBase64: async (imageUrl) => {
     try {
       const response = await API.get('/image-base64', {
         params: { url: imageUrl }
       });
       return response.data.base64;
     } catch (error) {
-      throw new Error(error.response?.data?.error || 'Failed to fetch image as base64');
+      throw new Error(error.response?.data?.error || 'Image load failed');
     }
   }
 };

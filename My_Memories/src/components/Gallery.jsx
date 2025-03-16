@@ -124,9 +124,10 @@ const GalleryComponent = () => {
                 ? new Date(image.date).toLocaleDateString()
                 : "Unknown Date"}
             </time>
-            <button 
+            <button
               className="edit-button"
               onClick={handleEditClick}
+              onMouseDown={(e) => e.stopPropagation()}
             >
               Edit
             </button>

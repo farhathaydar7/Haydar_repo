@@ -7,11 +7,11 @@ class ImageService {
     private $uploadDir;
     private $publicBasePath;
 
-    public function __construct(string $uploadDir, string $publicBasePath = '/') {
-        $this->uploadDir = rtrim($uploadDir, '/');
-        $this->publicBasePath = rtrim($publicBasePath, '/');
-    }
 
+public function __construct(string $uploadDir, string $publicPath) {
+    $this->uploadDir = rtrim($uploadDir, '/\\'); // Ensure no trailing slashes
+    $this->publicPath = rtrim($publicPath, '/');
+}
     /**
      * Process a base64 image upload and save it to the server.
      */
@@ -44,7 +44,7 @@ class ImageService {
             throw new ImageProcessingException('Failed to save image');
         }
 
-        return "/uploads/{$userId}/{$filename}";
+        return "$userId/$filename";
     }
 
     /**
@@ -52,32 +52,27 @@ class ImageService {
      */
     public function getImageAsBase64(string $imageUrl): string {
         try {
-            // Remove the public base path from the image URL
-            $relativePath = str_replace($this->publicBasePath, '', $imageUrl);
-
-            // Construct the full filesystem path
-            $fullPath = $this->uploadDir . DIRECTORY_SEPARATOR . ltrim($relativePath, '/');
-
-            // Normalize the path (resolve any '..' or '.')
-            $fullPath = realpath($fullPath);
-
-            // Validate the path
-            if (!$fullPath || !file_exists($fullPath)) {
-                throw new ImageProcessingException("Image file not found: $fullPath");
+            // Extract relative path from URL
+            $baseUrl = 'http://localhost:8000/';
+            $relativePath = str_replace($baseUrl, '', $imageUrl);
+            
+            // Remove duplicate "uploads" from path
+            $relativePath = ltrim(str_replace('uploads/', '', $relativePath), '/');
+            
+            // Build correct filesystem path
+            $fullPath = $this->uploadDir . DIRECTORY_SEPARATOR . $relativePath;
+            $fullPath = str_replace(['/', '\\'], DIRECTORY_SEPARATOR, $fullPath);
+    
+            if (!file_exists($fullPath)) {
+                throw new \Exception("Image file not found: $fullPath");
             }
-
-            // Ensure the file is within the upload directory (security check)
-            if (strpos($fullPath, $this->uploadDir) !== 0) {
-                throw new ImageProcessingException("Invalid image path: $fullPath");
-            }
-
-            // Get MIME type and file content
-            $mimeType = mime_content_type($fullPath);
+    
             $imageData = file_get_contents($fullPath);
-
-            return 'data:' . $mimeType . ';base64,' . base64_encode($imageData);
+            $mimeType = mime_content_type($fullPath);
+            
+            return "data:$mimeType;base64," . base64_encode($imageData);
         } catch (\Exception $e) {
-            throw new ImageProcessingException('Image retrieval failed: ' . $e->getMessage());
+            throw new ImageProcessingException("Image retrieval failed: " . $e->getMessage());
         }
     }
 }

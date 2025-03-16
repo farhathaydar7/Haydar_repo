@@ -21,7 +21,7 @@ return [
         'expiry' => 3600
     ],
     'uploads' => [
-        'dir' => __DIR__ . '/../uploads',
-        'public_path' => '/uploads'
-    ]
+    'dir' => __DIR__ . '/../uploads', // No trailing slash
+    'public_path' => 'uploads'        // No leading slash
+]
 ];
