@@ -50,8 +50,8 @@ A RESTful API for managing user photos, tags, and authentication using JWT. Buil
    ```bash
    composer install
    ```
-3. Create `.env` file:
-   ```env
+3. Edit `config.php` file:
+  
    DB_HOST=localhost
    DB_NAME=mymemories
    DB_USER=root
@@ -60,7 +60,7 @@ A RESTful API for managing user photos, tags, and authentication using JWT. Buil
    UPLOAD_DIR=./public/uploads
    APP_ENV=development
     MIGRATION_KEY=YOUR_MIGRATION_KEY
-   ```
+  
 4. Migrate using the migration key by calling the endpoint "http://localhost:8000/migration.php?api_key=YOUR_MIGRATION_KEY"
 
 ---
