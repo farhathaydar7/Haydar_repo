@@ -1,0 +1,80 @@
+/* Root Variables for Consistency & Theming */
+:root {
+    --primary-color: #0077cc;
+    --text-color: #333;
+    --sidebar-bg: #e6f2ff;
+    --transition-speed: 0.3s;
+    --border-radius: 8px;
+    --font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  }
+  
+  /* Navbar Container */
+  .navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 24px;
+    background-color: var(--sidebar-bg);
+    border-bottom: 1px solid #ddd;
+    font-family: var(--font-family);
+  }
+  
+  /* Left Side: Logo & Brand */
+  .navbar-left {
+    display: flex;
+    align-items: center;
+  }
+  
+  .navbar-logo {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    margin-right: 12px;
+  }
+  
+  .navbar-brand {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--text-color);
+  }
+  
+  /* Right Side: Navigation Items */
+  .navbar-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
+  
+  .navbar-item {
+    font-size: 16px;
+    color: var(--text-color);
+    text-decoration: none;
+    cursor: pointer;
+    background: none;
+    border: none;
+    outline: none;
+    transition: color var(--transition-speed);
+  }
+  
+  .navbar-item:hover {
+    color: var(--primary-color);
+  }
+  
+  /* Optional: distinct styling for Logout if needed */
+  .navbar-logout {
+    padding: 4px 8px;
+    border-radius: var(--border-radius);
+  }
+    
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .navbar {
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    .navbar-right {
+      gap: 16px;
+    }
+  }
+  

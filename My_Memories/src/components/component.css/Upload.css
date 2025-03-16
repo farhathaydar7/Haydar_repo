@@ -1,0 +1,82 @@
+/* Upload.css */
+
+/* Container for the upload form */
+.upload-container {
+  max-width: 600px;
+  margin: 30px auto;
+  padding: 20px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  background-color: #fff;
+  font-family: Arial, sans-serif;
+}
+
+/* Header styling */
+.upload-container h2 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+/* Error message styling */
+.error {
+  color: #e53e3e;
+  background-color: #fed7d7;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Upload form styling */
+.upload-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+/* File input styling */
+.upload-form input[type="file"] {
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+}
+
+/* Text, date, and textarea inputs */
+.upload-form input[type="text"],
+.upload-form input[type="date"],
+.upload-form textarea {
+  padding: 10px;
+  border: 1px solid #e2e8f0;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+/* Textarea adjustments */
+.upload-form textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Upload button styling */
+.upload-form button {
+  background-color: #48bb78;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 4px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+/* Hover state for the button */
+.upload-form button:hover {
+  background-color: #38a169;
+}
+
+/* Disabled button styling */
+.upload-form button:disabled {
+  background-color: #a0aec0;
+  cursor: not-allowed;
+}
