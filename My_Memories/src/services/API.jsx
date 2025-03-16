@@ -47,7 +47,7 @@ export const isTokenValid = (token) => {
 export default {
   // Authentication
   login: (credentials) => API.post('/login', credentials),
-  register: (userData) => API.post('/register', userData),
+  register: (userData) => API.post('/register', userData), // Already exists in current implementation
   verifyToken: () => API.get('/verify-token'),
 
   // Photos

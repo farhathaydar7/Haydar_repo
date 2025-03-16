@@ -1,7 +1,5 @@
 import React, { useState } from 'react';
-import { sha256 } from 'js-sha256';
-import API_URL from '../assets/links';
-import HEADERS from '../assets/headers';
+import API from '../services/API';
 import { useNavigate } from 'react-router-dom';
 import '../components/component.css/Register.css'; // Import CSS
 import memoriesIcon from '../assets/Icon/memories_icon.png';
@@ -11,7 +9,6 @@ function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const navigate = useNavigate();
 
   const handleSubmit = async (event) => {
@@ -29,20 +26,21 @@ function Register() {
     }
 
     try {
-      const response = await fetch(API_URL + 'register', {
-        method: 'POST',
-        headers: HEADERS,
-        body: JSON.stringify({ username, email, password: sha256(password) })
+      await API.register({
+        username,
+        email: email.trim().toLowerCase(),
+        password
       });
 
-      const data = await response.json();
+      // Auto-login after registration
+      const loginResponse = await API.login({
+        email: email.trim().toLowerCase(),
+        password
+      });
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Registration failed');
-      }
-
-      setSuccess('Registration successful! Please login');
-      navigate('/');
+      localStorage.setItem('jwt_token', loginResponse.data.token);
+      localStorage.setItem('user', JSON.stringify(loginResponse.data.user));
+      navigate('/gallery');
 
     } catch (error) {
       console.error('Registration error:', error);
@@ -56,7 +54,6 @@ function Register() {
         <img src={memoriesIcon} alt="Logo" className="logo" />
         <h1 className="website-title">Sign Up</h1>
         {error && <p className="error-message">{error}</p>}
-        {success && <p className="success-message">{success}</p>}
         <form onSubmit={handleSubmit}>
           <input
             type="text"
