@@ -31,57 +31,64 @@ class AuthController {
     }
 
     public function login(string $email, string $password): array {
-        // Validate input
         if (empty($email) || empty($password)) {
             throw new ValidationException('Email and password are required');
         }
 
-        // Authenticate user
         $authResult = $this->userModel->authenticate($email, $password);
 
         if (!$authResult) {
             throw new AuthenticationException('Invalid credentials');
         }
 
-        // Generate JWT token
+        // Ensure we have a user object with getId() method
+        $user = $authResult['user'];
         $token = $this->jwtService->generateToken([
-            'user_id' => $authResult['user']->getId(),
-            'email' => $authResult['user']->getEmail()
+            'sub' => $user->getId(),
+            'email' => $user->getEmail()
         ]);
 
         return [
             'success' => true,
             'token' => $token,
             'user' => [
-                'id' => $authResult['user']->getId(),
-                'email' => $authResult['user']->getEmail()
+                'id' => $user->getId(),
+                'email' => $user->getEmail()
             ]
         ];
     }
-         public function verifyToken(): array {
-             $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-             
-             if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
-                 throw new AuthenticationException('Authorization header missing or invalid');
-             }
-     
-             $token = $matches[1];
-             
-             try {
-                 $decoded = $this->userModel->verifyToken($token);
-                 return [
-                     'success' => true,
-                     'user' => [
-                         'id' => $decoded['sub'],
-                         'email' => $decoded['email']
-                     ]
-                 ];
-             } catch (AuthenticationException $e) {
-                 return [
-                     'success' => false,
-                     'error' => $e->getMessage()
-                 ];
-             }
-         }
+
+    public function verifyToken(): array {
+        $authHeader = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+        
+        if (!preg_match('/Bearer\s(\S+)/', $authHeader, $matches)) {
+            throw new AuthenticationException('Authorization header missing or invalid');
+        }
+
+        $token = $matches[1];
+        
+        try {
+            // Convert to array if using Firebase JWT decoder
+            $decoded = (array) $this->userModel->verifyToken($token);
+            
+            // Validate required claims
+            if (!isset($decoded['sub'])) {
+                throw new AuthenticationException('Invalid token: missing subject');
+            }
+
+            return [
+                'success' => true,
+                'user' => [
+                    'id' => $decoded['sub'],
+                    'email' => $decoded['email'] ?? null
+                ]
+            ];
+        } catch (AuthenticationException $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
 }
 ?>

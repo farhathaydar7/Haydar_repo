@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
-import API from '../services/API';
+import API, { isTokenValid } from '../services/API'; // Fixed import
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -17,13 +17,13 @@ const Auth = () => {
       }
 
       try {
-        // Verify token with backend
-        await API.verifyToken();
+        // Combined verification
+        await Promise.all([
+          API.verifyToken(),
+          new Promise(resolve => setTimeout(resolve, 500)) // Debounce
+        ]);
         
-        // Additional client-side check
-        const isValidToken = API.isTokenValid(token);
-        
-        if (!isValidToken) {
+        if (!isTokenValid(token)) { // Use directly imported function
           throw new Error('Token expired');
         }
 

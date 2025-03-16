@@ -15,10 +15,7 @@ const usePhoto = () => {
     return /^https?:\/\/.+\..+$/.test(image_url);
   };
 
-  const validateDescription = (description) => {
-    return description.length <= 500;
-  };
-
+  
   const formatDate = () => {
     if (photo.date) {
       return photo.date.toLocaleDateString('en-US', {
@@ -34,9 +31,14 @@ const usePhoto = () => {
     photo,
     setPhoto,
     validateImageUrl,
-    validateDescription,
+    validateDescription: validateDescription,
     formatDate
   };
 };
 
+const validateDescription = (description) => {
+  return description.length <= 500;
+};
+
 export default usePhoto;
+export { validateDescription };

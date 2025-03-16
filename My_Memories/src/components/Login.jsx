@@ -26,7 +26,7 @@ function Login() {
       if (token && user) {
         localStorage.setItem('jwt_token', token);
         localStorage.setItem('user', JSON.stringify(user));
-        navigate('/gallery');
+        navigate('/gallery', { replace: true });
       } else {
         setError('Invalid response from server');
       }

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../services/API";
+import { validateDescription } from "../models/Photo.model.jsx";
 import "./component.css/Gallery.css";
 
 const Skeleton = ({ height, className }) => (
@@ -36,21 +37,21 @@ const GalleryComponent = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        // Token is handled by API service
-
-        const params = new URLSearchParams({
+        const response = await API.getPhotos({
           search: searchQuery,
           tag: selectedTag || ""
         });
 
-        const response = await API.getPhotos(params);
-        
+        const validImages = response.data.filter(img =>
+          img.image_url && validateDescription(img.description)
+        );
+
         setGalleryData({
           tags: response.tags,
-          images: response.data.filter(img => img.image_url),
+          images: validImages,
         });
       } catch (err) {
-        setError(err.message);
+        setError(err.response?.data?.error || err.message);
       } finally {
         setLoading(false);
       }
@@ -58,7 +59,7 @@ const GalleryComponent = () => {
 
     const debounceTimer = setTimeout(fetchData, 300);
     return () => clearTimeout(debounceTimer);
-  }, [searchQuery, selectedTag]);
+  }, [searchQuery, selectedTag, validateDescription]);
 
   // Gallery Image Component
   const GalleryImage = ({ image }) => {

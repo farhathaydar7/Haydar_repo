@@ -1,98 +1,135 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import API from '../assets/api';
-import { TextField, Button, Select, MenuItem, FormControl, InputLabel } from '@mui/material';
+import { TextField, Button, Select, MenuItem, FormControl, InputLabel, Box, Typography } from '@mui/material';
+import API from '../services/API';
+import usePhoto from '../models/Photo.model';
+import useTag from '../models/Tag.model';
 
 const UpdateImage = () => {
   const { photoId } = useParams();
   const navigate = useNavigate();
-  const [tags, setTags] = useState([]);
-  const [formData, setFormData] = useState({
-    title: '',
-    date: '',
-    description: '',
-    tag: ''
-  });
+  const { photo, setPhoto, validateDescription } = usePhoto();
+  const { tags, setTags, validateName } = useTag();
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Fetch existing photo data and tags
   useEffect(() => {
     const fetchData = async () => {
       try {
         const [photoResponse, tagsResponse] = await Promise.all([
-          API.getPhotoDetails(photoId),
+          API.getPhoto(photoId),
           API.getTags()
         ]);
-        
-        setFormData({
+
+        setPhoto({
           title: photoResponse.data.title,
           date: photoResponse.data.date.split('T')[0],
           description: photoResponse.data.description,
-          tag: photoResponse.data.tag_id
+          tag_id: photoResponse.data.tag_id,
+          image_url: photoResponse.data.image_url
         });
-        
+
         setTags(tagsResponse.data);
-      } catch (err) {
-        setError(err.message);
+      } catch (error) {
+        setError(error.response?.data?.error || error.message);
+      } finally {
+        setLoading(false);
       }
     };
-    
+
     fetchData();
-  }, [photoId]);
+  }, [photoId, setPhoto, setTags]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Validate inputs
+      if (!validateDescription(photo.description)) {
+        throw new Error('Description must be less than 500 characters');
+      }
+
+      if (photo.tag_id && !validateName(tags.find(t => t.tag_id === photo.tag_id)?.tag_name || '')) {
+        throw new Error('Invalid tag name');
+      }
+
       await API.updatePhoto(photoId, {
-        ...formData,
-        tag_id: formData.tag
+        title: photo.title,
+        date: photo.date,
+        description: photo.description,
+        tag_id: photo.tag_id
       });
+
       navigate(`/photos/${photoId}`);
-    } catch (err) {
-      setError(err.message);
+    } catch (error) {
+      setError(error.response?.data?.error || error.message);
     }
   };
 
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" mt={4}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
-    <div className="update-container">
-      <h2>Edit Memory</h2>
-      {error && <div className="error-message">{error}</div>}
-      
-      <form onSubmit={handleSubmit}>
+    <Box sx={{ maxWidth: 800, mx: 'auto', p: 3 }}>
+      <Typography variant="h4" gutterBottom>
+        Edit Memory
+      </Typography>
+
+      {error && (
+        <Typography color="error" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
+      )}
+
+      <Box
+        component="form"
+        onSubmit={handleSubmit}
+        sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}
+      >
         <TextField
           label="Title"
           fullWidth
-          margin="normal"
-          value={formData.title}
-          onChange={(e) => setFormData({...formData, title: e.target.value})}
+          value={photo.title}
+          onChange={(e) => setPhoto({ ...photo, title: e.target.value })}
+          required
         />
-        
+
         <TextField
           label="Date"
           type="date"
           fullWidth
-          margin="normal"
           InputLabelProps={{ shrink: true }}
-          value={formData.date}
-          onChange={(e) => setFormData({...formData, date: e.target.value})}
+          value={photo.date}
+          onChange={(e) => setPhoto({ ...photo, date: e.target.value })}
+          required
         />
-        
+
         <TextField
           label="Description"
           multiline
           rows={4}
           fullWidth
-          margin="normal"
-          value={formData.description}
-          onChange={(e) => setFormData({...formData, description: e.target.value})}
+          value={photo.description}
+          onChange={(e) => setPhoto({ ...photo, description: e.target.value })}
+          error={!validateDescription(photo.description)}
+          helperText={
+            !validateDescription(photo.description) &&
+            'Description must be less than 500 characters'
+          }
         />
-        
-        <FormControl fullWidth margin="normal">
+
+        <FormControl fullWidth>
           <InputLabel>Tag</InputLabel>
           <Select
-            value={formData.tag}
-            onChange={(e) => setFormData({...formData, tag: e.target.value})}
+            value={photo.tag_id || ''}
+            label="Tag"
+            onChange={(e) => setPhoto({ ...photo, tag_id: e.target.value })}
           >
+            <MenuItem value="">No Tag</MenuItem>
             {tags.map((tag) => (
               <MenuItem key={tag.tag_id} value={tag.tag_id}>
                 {tag.tag_name}
@@ -100,17 +137,39 @@ const UpdateImage = () => {
             ))}
           </Select>
         </FormControl>
-        
-        <Button 
-          type="submit" 
-          variant="contained" 
-          color="primary"
-          fullWidth
-        >
-          Update Memory
-        </Button>
-      </form>
-    </div>
+
+        <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+          <Button
+            variant="contained"
+            type="submit"
+            sx={{ flex: 1 }}
+          >
+            Save Changes
+          </Button>
+
+          <Button
+            variant="outlined"
+            onClick={() => navigate(`/photos/${photoId}`)}
+            sx={{ flex: 1 }}
+          >
+            Cancel
+          </Button>
+        </Box>
+      </Box>
+
+      <Box sx={{ mt: 4, textAlign: 'center' }}>
+        <img
+          src={`${API.BASE_URL}${photo.image_url}`}
+          alt={photo.title}
+          style={{
+            maxWidth: '100%',
+            maxHeight: '400px',
+            borderRadius: '8px',
+            boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+          }}
+        />
+      </Box>
+    </Box>
   );
 };
 

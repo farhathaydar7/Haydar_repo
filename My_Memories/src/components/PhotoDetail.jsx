@@ -1,37 +1,38 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Box, Typography, Button, CircularProgress } from '@mui/material';
-import API_URL, { PHOTOS_ENDPOINT } from '../assets/links.jsx';
+import { Button, Typography, Box, CircularProgress } from '@mui/material';
+import API from '../services/API';
+import usePhoto from '../models/Photo.model';
 
 const PhotoDetail = () => {
   const { photoId } = useParams();
   const navigate = useNavigate();
-  const [photo, setPhoto] = useState(null);
+  const { photo, setPhoto } = usePhoto();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchPhoto = async () => {
       try {
-        const response = await fetch(`${PHOTOS_ENDPOINT}/${photoId}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('jwt_token')}`
-          }
+        const response = await API.getPhoto(photoId);
+        setPhoto({
+          image_id: response.data.image_id,
+          title: response.data.title,
+          date: response.data.date,
+          description: response.data.description,
+          image_url: response.data.image_url,
+          tag_id: response.data.tag_id,
+          tag_name: response.data.tag_name
         });
-
-        if (!response.ok) throw new Error('Failed to fetch photo');
-        
-        const data = await response.json();
-        setPhoto(data);
-      } catch (err) {
-        setError(err.message);
+      } catch (error) {
+        setError(error.response?.data?.error || error.message);
       } finally {
         setLoading(false);
       }
     };
 
     fetchPhoto();
-  }, [photoId]);
+  }, [photoId, setPhoto]);
 
   const handleEdit = () => {
     navigate(`/update/${photoId}`, {
@@ -74,14 +75,18 @@ const PhotoDetail = () => {
       </Button>
 
       <Typography variant="h3" gutterBottom>
-        {photo.title}
+        {photo.title || 'Untitled Memory'}
       </Typography>
 
       <Box sx={{ mb: 3 }}>
         <img
-          src={`${API_URL}${photo.image_url}`}
+          src={`${API.BASE_URL}${photo.image_url}`}
           alt={photo.title}
-          style={{ maxWidth: '100%', borderRadius: 8 }}
+          style={{ 
+            maxWidth: '100%', 
+            borderRadius: 8,
+            boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+          }}
         />
       </Box>
 
@@ -94,8 +99,16 @@ const PhotoDetail = () => {
         </Typography>
       </Box>
 
-      <Typography variant="body1" paragraph>
-        {photo.description}
+      <Typography 
+        variant="body1" 
+        paragraph
+        sx={{
+          whiteSpace: 'pre-wrap',
+          lineHeight: 1.6,
+          fontSize: '1.1rem'
+        }}
+      >
+        {photo.description || 'No description available'}
       </Typography>
     </Box>
   );
