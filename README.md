@@ -1,4 +1,5 @@
 # MyMemories API Documentation
+Project is work in progress , current state is unfinished and still under developpment
 
 A RESTful API for managing user photos, tags, and authentication using JWT. Built with PHP, PDO, and SOLID principles.
 
