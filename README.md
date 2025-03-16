@@ -1,6 +1,6 @@
 # MyMemories API Documentation
 Project is work in progress , current state is unfinished and still under developpment
-
+http://52.47.95.15/
 A RESTful API for managing user photos, tags, and authentication using JWT. Built with PHP, PDO, and SOLID principles.
 
 ---
