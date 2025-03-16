@@ -1,41 +1,55 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, Outlet } from 'react-router-dom';
-import { jwtDecode } from 'jwt-decode';
-import API from '../assets/api';
+import API from '../services/API';
 
 const Auth = () => {
   const navigate = useNavigate();
   const [isValid, setIsValid] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const validateToken = async () => {
       const token = localStorage.getItem('jwt_token');
       
       if (!token) {
-        navigate('/');
+        handleInvalidToken();
         return;
       }
 
       try {
-        await API.verifyToken(token);
-        const decoded = jwtDecode(token);
+        // Verify token with backend
+        await API.verifyToken();
         
-        if (decoded.exp < Date.now() / 1000) {
+        // Additional client-side check
+        const isValidToken = API.isTokenValid(token);
+        
+        if (!isValidToken) {
           throw new Error('Token expired');
         }
-        
+
         setIsValid(true);
-      // eslint-disable-next-line no-unused-vars
       } catch (error) {
-        localStorage.removeItem('jwt_token');
-        navigate('/');
+        handleInvalidToken(error.message);
+      } finally {
+        setLoading(false);
       }
     };
 
     validateToken();
   }, [navigate]);
 
-  return isValid ? <Outlet /> : <div className="auth-loading">Verifying authentication...</div>;
+  const handleInvalidToken = (message = '') => {
+    console.error('Authentication error:', message);
+    localStorage.removeItem('jwt_token');
+    localStorage.removeItem('user');
+    navigate('/');
+  };
+
+  if (loading) {
+    return <div className="auth-loading">Checking authentication status...</div>;
+  }
+
+  return isValid ? <Outlet /> : <div className="auth-error">Authentication failed. Redirecting...</div>;
 };
 
 export default Auth;

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../assets/api";
+import API from "../services/API";
 import "./component.css/Gallery.css";
 
 const Skeleton = ({ height, className }) => (

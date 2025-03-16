@@ -5,6 +5,9 @@ use PDO;
 use PDOException;
 use RuntimeException;
 use Firebase\JWT\JWT;
+use Firebase\JWT\Key as FirebaseKey;
+use Firebase\JWT\Key as JWTKey;
+use Firebase\JWT\Key;
 use MyApp\Utils\Database;
 use MyApp\Skeletons\UserSkeleton;
 use MyApp\Exceptions\UserAlreadyExistsException;
@@ -142,7 +145,8 @@ class UserModel extends UserSkeleton {
     // Token verification
     public function verifyToken(string $token): array {
         try {
-            $decoded = JWT::decode($token, $this->jwtSecret, ['HS256']);
+            $allowedAlgs = ['HS256'];
+            $decoded = JWT::decode($token, new Key($this->jwtSecret, 'HS256'));
             return (array)$decoded;
         } catch (\Exception $e) {
             throw new AuthenticationException('Token verification failed: ' . $e->getMessage());

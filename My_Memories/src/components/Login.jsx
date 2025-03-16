@@ -1,13 +1,12 @@
 import React, { useState } from 'react';
+import API from '../services/API';
 import { useNavigate } from 'react-router-dom';
-import API_URL from '../assets/links';
-import HEADERS from '../assets/headers';
 import memoriesIcon from '../assets/Icon/memories_icon.png';
 import './component.css/Login.css';
 
 function Login() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -16,39 +15,28 @@ function Login() {
     setError('');
 
     try {
-      const response = await fetch(API_URL + 'login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ email: username, password }),
+      const response = await API.login({
+        email: email.trim().toLowerCase(),
+        password: password.trim()
       });
 
-      let data;
-      try {
-        data = await response.json();
-      } catch (e) {
-        setError('Failed to parse response');
-        console.error('JSON parse error:', e);
-        return;
-      }
+      // Axios wraps responses in data property
+      const { token, user } = response.data;
 
-      if (response.ok && data.token) {
-        // Store token
-        localStorage.setItem('jwt_token', data.token);
-        
-        // Store user information
-        localStorage.setItem('user', JSON.stringify({
-          id: data.user_id,
-          email: data.email
-        }));
-        navigate('/gallery'); }
-        else {
-        setError(data.error || 'Login failed');
+      if (token && user) {
+        localStorage.setItem('jwt_token', token);
+        localStorage.setItem('user', JSON.stringify(user));
+        navigate('/gallery');
+      } else {
+        setError('Invalid response from server');
       }
-    } catch (e) {
-      setError('Failed to connect to server');
-      console.error('Login error:', e);
+    } catch (error) {
+      // Handle Axios error structure
+      const errorMessage = error.response?.data?.error || 
+                         error.message || 
+                         'Failed to connect to server';
+      setError(errorMessage);
+      console.error('Login error:', error);
     }
   };
 
@@ -71,19 +59,20 @@ function Login() {
 
           {/* Email input */}
           <div className="input-group">
-            <label htmlFor="username" className="field-label">
+            <label htmlFor="email" className="field-label">
               Email
               <a href="#forgot-email" className="forgot-link">
                 Forgot e-mail?
               </a>
             </label>
             <input
-              type="text"
-              id="username"
+              type="email"
+              id="email"
               placeholder="example@mail.com"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="username"
             />
           </div>
 
@@ -102,6 +91,7 @@ function Login() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
             />
           </div>
 
