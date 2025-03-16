@@ -4,6 +4,7 @@ import API from "../services/API";
 import { validateDescription } from "../models/Photo.model.jsx";
 import "./component.css/Gallery.css";
 
+// Skeleton loading component
 const Skeleton = ({ height, className }) => (
   <div
     className={`bg-gray-200 animate-pulse rounded-lg ${className}`}
@@ -42,9 +43,13 @@ const GalleryComponent = () => {
           tag: selectedTag || ""
         });
 
+        // Extract images and tags from the API response
+        const images = response.data?.images || []; // Fallback to empty array
+        const tags = response.data?.tags || [];
+
         // Filter valid images and add base64 data
         const validImages = await Promise.all(
-          response.data
+          images
             .filter(img => img.image_url && validateDescription(img.description))
             .map(async (img) => {
               try {
@@ -57,10 +62,8 @@ const GalleryComponent = () => {
             })
         );
 
-        setGalleryData({
-          tags: response.tags,
-          images: validImages,
-        });
+        // Update state with images and tags
+        setGalleryData({ tags, images: validImages });
       } catch (err) {
         setError(err.response?.data?.error || err.message);
       } finally {

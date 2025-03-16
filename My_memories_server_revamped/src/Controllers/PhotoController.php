@@ -4,20 +4,24 @@ namespace MyApp\Controllers;
 use MyApp\Models\PhotoModel;
 use MyApp\Services\ImageService;
 use MyApp\Middleware\JwtMiddleware;
+use MyApp\Models\TagModel;
 
 class PhotoController {
     private $photoModel;
     private $imageService;
     private $jwtMiddleware;
+    private $tagModel;
 
     public function __construct(
         PhotoModel $photoModel,
         ImageService $imageService,
-        JwtMiddleware $jwtMiddleware
+        JwtMiddleware $jwtMiddleware,
+        TagModel $tagModel
     ) {
         $this->photoModel = $photoModel;
         $this->imageService = $imageService;
         $this->jwtMiddleware = $jwtMiddleware;
+        $this->tagModel = $tagModel; 
     }
     public function getUserIdFromToken(): int {
         return $this->jwtMiddleware->handle(); // This should return the user ID
@@ -77,37 +81,48 @@ class PhotoController {
     }
 
     public function uploadPhoto(array $data): array {
-        $userId = $this->jwtMiddleware->handle();
-        
-        // Process image upload
-        $imagePath = $this->imageService->processUpload(
-            $data['image'],
-            $userId
-        );
-    
-        // Handle tag creation/retrieval
-        $tagId = null;
-        if (!empty($data['tag'])) {
-            // Check if tag exists
-            $existingTag = $this->tagModel->getTagByName($data['tag'], $userId);
+        try {
+            $userId = $this->jwtMiddleware->handle();
             
-            if ($existingTag) {
-                $tagId = $existingTag['tag_id'];
-            } else {
-                // Create new tag
-                $newTag = $this->tagModel->createTag($data['tag'], $userId);
-                $tagId = $newTag['tag_id'];
-            }
-        }
+            // Process image upload
+            $imagePath = $this->imageService->processUpload(
+                $data['image'],
+                $userId
+            );
     
-        return $this->photoModel->create(
-            $userId,
-            $data['title'],
-            $data['date'],
-            $data['description'],
-            $tagId, // Now guaranteed to be int|null
-            $imagePath
-        );
+            // Handle tag creation/retrieval
+            $tagId = null;
+            if (!empty($data['tag'])) {
+                $existingTag = $this->tagModel->getTagByName($data['tag'], $userId);
+                if ($existingTag) {
+                    $tagId = $existingTag['tag_id'];
+                } else {
+                    $newTag = $this->tagModel->createTag($data['tag'], $userId);
+                    $tagId = $newTag['tag_id'];
+                }
+            }
+    
+            // Create photo entry
+            $result = $this->photoModel->create(
+                $userId,
+                $data['title'],
+                $data['date'],
+                $data['description'],
+                $tagId,
+                $imagePath
+            );
+    
+            return [
+                'success' => true,
+                'data' => $result['photo']
+            ];
+    
+        } catch (\Exception $e) {
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
     }
 
    

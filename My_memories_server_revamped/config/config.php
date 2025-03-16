@@ -10,16 +10,18 @@ $dotenv->load();
 
 return [
     'database' => [
-        'dsn' => $_ENV['DB_DSN'] ?? 'mysql:host=localhost;dbname=gallery_db',
-        'user' => $_ENV['DB_USER'] ?? 'root',
-        'password' => $_ENV['DB_PASS'] ?? '',
+        'host' => 'localhost',      // Database host
+        'database' => 'gallery_db',    // Database name
+        'username' => 'root',       
+        'password' => '',           
+        'charset' => 'utf8mb4'
     ],
     'jwt' => [
-        'secret' => $_ENV['JWT_SECRET'] ?? 'default_secret',
-        'expiry' => $_ENV['JWT_EXPIRY'] ?? 3600,
+        'secret' => 'JWT_SECRET_KEY_PRO_MAX',
+        'expiry' => 3600
     ],
     'uploads' => [
-        'dir' => __DIR__ . '/../../public/assets/photos', // Absolute server path
-        'public_path' => '/assets/photos/' // URL path
-    ],
+        'dir' => __DIR__ . '/../uploads',
+        'public_path' => '/uploads'
+    ]
 ];

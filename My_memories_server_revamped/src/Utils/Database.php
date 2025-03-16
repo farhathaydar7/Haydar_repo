@@ -10,12 +10,17 @@ class Database {
 
     private function __construct(array $config) {
         try {
+            $dsn = "mysql:host={$config['host']};dbname={$config['database']};charset={$config['charset']}";
+            
             $this->connection = new PDO(
-                $config['dsn'],
-                $config['user'],
-                $config['password']
+                $dsn,
+                $config['username'],
+                $config['password'],
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+                ]
             );
-            $this->connection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
         } catch (PDOException $e) {
             throw new \RuntimeException("Database connection failed: " . $e->getMessage());
         }
@@ -27,4 +32,8 @@ class Database {
         }
         return self::$instance->connection;
     }
+
+    // Prevent cloning and serialization
+    private function __clone() {}
+    public function __wakeup() {}
 }

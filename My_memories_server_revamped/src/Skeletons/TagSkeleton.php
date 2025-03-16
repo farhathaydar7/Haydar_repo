@@ -1,9 +1,12 @@
 <?php
-
-class TagSkeleton {
+namespace MyApp\Skeletons;
+abstract class TagSkeleton {
     protected ?int $tag_id;
     protected ?string $tag_name;
     protected ?int $tag_owner;
+
+    abstract protected function validateTagData(string $tag_name, int $owner_id): void;
+    abstract protected function validateOwnerId(int $owner_id): void;
 
     public function __construct(
         int $tag_id = null,

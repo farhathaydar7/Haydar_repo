@@ -1,15 +1,14 @@
 <?php
 
-require_once __DIR__ . '/../skeletons/Tag.Skeleton.php';
-
-class TagModel extends TagSkeleton {
+namespace MyApp\Models; 
+use PDO;
+use PDOException;
+class TagModel extends \MyApp\Skeletons\TagSkeleton{
     private $db;
 
-    public function __construct(PDO $db) {
-        parent::__construct();
+    public function __construct(\PDO $db) { // Use global namespace PDO
         $this->db = $db;
     }
-
     /**
      * Find or create a tag.
      */
@@ -86,7 +85,7 @@ public function createTag(string $tagName, int $userId): array {
     /**
      * Validate tag data.
      */
-    private function validateTagData(string $tag_name, int $owner_id): void {
+    protected function validateTagData(string $tag_name, int $owner_id): void { // Changed to protected
         if (empty($tag_name)) {
             throw new ValidationException("Tag name cannot be empty");
         }
@@ -95,6 +94,16 @@ public function createTag(string $tagName, int $userId): array {
             throw new ValidationException("Owner ID cannot be empty");
         }
     }
+
+    /**
+     * Validate owner ID (FIXED ACCESS LEVEL)
+     */
+    protected function validateOwnerId(int $owner_id): void { // Changed to protected
+        if (empty($owner_id)) {
+            throw new ValidationException("Owner ID cannot be empty");
+        }
+    }
+
     public function getTagByName(string $tagName, int $userId): ?array {
         $stmt = $this->db->prepare("
             SELECT tag_id 
@@ -111,13 +120,6 @@ public function createTag(string $tagName, int $userId): array {
         return $stmt->fetch(\PDO::FETCH_ASSOC) ?: null;
     }
 
-    /**
-     * Validate owner ID.
-     */
-    private function validateOwnerId(int $owner_id): void {
-        if (empty($owner_id)) {
-            throw new ValidationException("Owner ID cannot be empty");
-        }
-    }
+   
 }
 ?>

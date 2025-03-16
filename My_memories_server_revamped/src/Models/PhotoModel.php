@@ -16,24 +16,37 @@ class PhotoModel extends PhotoSkeleton {
     /**
      * Create a new photo entry in the database.
      */
-    public function create(int $owner_id, string $title, string $date, string $description, int $tag_id, string $image_url): string {
-        $stmt = $this->db->prepare("
-            INSERT INTO memory 
-            (image_url, owner_id, title, date, description, tag_id) 
-            VALUES 
-            (:image_url, :owner_id, :title, :date, :description, :tag_id)
-        ");
-        $stmt->execute([
-            ':image_url' => $image_url,
-            ':owner_id' => $owner_id,
-            ':title' => $title,
-            ':date' => $date,
-            ':description' => $description,
-            ':tag_id' => $tag_id
-        ]);
+    // PhotoModel.php
+public function create(int $owner_id, string $title, string $date, string $description, ?int $tag_id, string $image_url): array {
+    $stmt = $this->db->prepare("
+        INSERT INTO memory 
+        (image_url, owner_id, title, date, description, tag_id) 
+        VALUES 
+        (:image_url, :owner_id, :title, :date, :description, :tag_id)
+    ");
+    $stmt->execute([
+        ':image_url' => $image_url,
+        ':owner_id' => $owner_id,
+        ':title' => $title,
+        ':date' => $date,
+        ':description' => $description,
+        ':tag_id' => $tag_id
+    ]);
 
-        return $image_url;
-    }
+    // Return full photo data
+    return [
+        'success' => true,
+        'photo' => [
+            'image_id' => $this->db->lastInsertId(),
+            'image_url' => $image_url,
+            'owner_id' => $owner_id,
+            'title' => $title,
+            'date' => $date,
+            'description' => $description,
+            'tag_id' => $tag_id
+        ]
+    ];
+}
 
     /**
      * Get photo by ID.
